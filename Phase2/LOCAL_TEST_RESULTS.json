@@ -1,0 +1,21 @@
+{
+  "scope": "One Mac loopback rehearsal using real dnsmasq, Nginx, Python and OpenSSL. Not four-Mac LAN, OS resolver failover, pf enforcement or natural DNS cutover evidence.",
+  "passed": [
+    "Primary and independent backup DNS answer over UDP and TCP with TTL 30",
+    "Both edges serve A/B over HTTPS with the same trusted CA and correct names",
+    "Original backend ETag conditional HTTP 304 behavior is preserved",
+    "Backend A stopped: both edges retry to B with zero failed requests",
+    "Backend A restarted: passive fail_timeout expires and A/B load balancing resumes",
+    "Primary DNS stopped: backup still resolves project domain",
+    "After record change: source DNS serves new IP while real caching resolver serves old IP",
+    "Real 30-second DNS TTL expiry refreshes cached old IP to new IP",
+    "Flushing the actual dnsmasq cache immediately fetches the changed answer",
+    "Original edge stopped: standby independently serves both backends over valid HTTPS",
+    "Both backends stopped: TLS still validates and Nginx returns HTTP 502"
+  ],
+  "physical_tests_pending": [
+    "Cross-Mac pf isolation and rollback",
+    "Client OS resolver failover with packet evidence",
+    "Natural DNS edge cutover and macOS cache flush"
+  ]
+}

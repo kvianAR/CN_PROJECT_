@@ -34,3 +34,12 @@ Mac 2 - Edge/cache/
 ca.cnf
 Mac 2 - Edge/certs/*
 !Mac 2 - Edge/certs/.gitkeep
+
+# Phase 2 generated state, per-machine addresses, evidence and TLS material
+Phase2/site.json
+Phase2/runtime/
+Phase2/certs/
+Evidence/Phase2/*.json
+Evidence/Phase2/*.txt
+Evidence/Phase2/*.pcap
+Evidence/Phase2/*.pcapng

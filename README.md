@@ -1,3 +1,26 @@
+# Computer Networks — Phase 1 + Phase 2
+
+Phase 2 extends the final Phase 1 commit `52a46de198702b146ec60a2e5d6398dc92ab0def`.
+Original role folders, application source, configuration and Phase 1 evidence are preserved.
+
+**Start here:** [Phase 2 setup and six demonstrations](Phase2/README.md).
+
+**Remaining live work:** [four-Mac completion checklist](Phase2/REMAINING_LIVE_TESTS.md).
+Double-click `CHECK_PROJECT.command` to run all local checks and save their full transcript/summary.
+
+- [Mac-by-Mac quick start](Phase2/QUICKSTART_HI.md)
+- [Phase 2 report and honest demonstration status](Phase2/REPORT.md)
+- [Troubleshooting and recovery](Phase2/docs/TROUBLESHOOTING.md)
+- [Evidence checklist](Evidence/Phase2/README.md)
+
+Phase 2 generated configuration lives under `Phase2/runtime/`. Do not start Phase 1 and Phase 2
+listeners on the same addresses and ports at once. Stop each old service in its own terminal first.
+All service startup commands run in the foreground and stop with Ctrl+C.
+
+The Phase 1 documentation below is retained as the historical baseline.
+
+---
+
 # Computer Networks — Phase 1
 
 A private-LAN networking architecture demonstrating core computer networking concepts using four macOS machines on a shared Wi-Fi network. This project implements:

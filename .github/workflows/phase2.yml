@@ -1,0 +1,28 @@
+name: Phase 2 checks
+on:
+  push:
+    paths: ['Phase2/**', '.github/workflows/phase2.yml', 'Mac 3 - Backend A/**', 'Mac 4 - Backend B/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  network-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: sudo apt-get update && sudo apt-get install -y nginx dnsmasq zsh openssl dnsutils
+      - name: Run configuration, TLS, and real loopback integration tests
+        env:
+          CN_RUN_INTEGRATION: '1'
+        run: python3 -u -m unittest discover -s Phase2/tests -v
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: local-rehearsal-results
+          path: Phase2/LOCAL_TEST_RESULTS.json
+          if-no-files-found: ignore

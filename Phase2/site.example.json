@@ -1,0 +1,18 @@
+{
+  "domain": "team1.test",
+  "mac1": "10.3.3.225",
+  "mac2": "10.7.21.150",
+  "mac3": "10.7.16.120",
+  "mac4": "10.7.5.29",
+  "upstream_dns": "10.7.0.1",
+  "interface": "en0",
+  "dns_port": 53,
+  "backup_dns_port": 53,
+  "cache_port": 1053,
+  "https_port": 8443,
+  "standby_https_port": 8443,
+  "backend_a_port": 3001,
+  "backend_b_port": 3002,
+  "ttl": 30,
+  "active_edge": "primary"
+}
