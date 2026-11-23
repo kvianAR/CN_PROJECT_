@@ -23,6 +23,13 @@ Phase 2 generated configuration lives under `Phase2/runtime/`. Do not start Phas
 listeners on the same addresses and ports at once. Stop each old service in its own terminal first.
 All service startup commands run in the foreground and stop with Ctrl+C.
 
+## Verified local test run
+
+The complete six-test suite passed without failures, errors or skips. Saved source hashes match
+the current implementation. The [summary](Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json)
+and [full transcript](Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt) are included.
+These are local rehearsal results; physical four-Mac demonstrations retain their separate status.
+
 The Phase 1 documentation below is retained as the historical baseline.
 
 ---

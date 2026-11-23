@@ -1,9 +1,15 @@
 {
-  "updated_at_utc": "2026-11-22T22:17:36.737863+00:00",
+  "updated_at_utc": "2026-11-23T04:39:18.638044+00:00",
   "full_suite": {
     "passed": 6,
     "total": 6,
-    "source": "User confirmation in conversation after rerunning the corrected suite; full terminal log was not saved by the test runner."
+    "source": "Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json",
+    "machine_recorded": true,
+    "transcript": "Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt",
+    "source_sha256": {
+      "Phase2/cn.py": "1ca39ee101fa0ce9e2d0745401df859f85ccabef741b1db4fdc3a5c9f034afa6",
+      "Phase2/tests/test_phase2.py": "62c569a87da2cb25e99b7f9783769f84c52886200d607d863c78eae2298a984d"
+    }
   },
   "integration_checks": {
     "source": "Phase2/LOCAL_TEST_RESULTS.json",

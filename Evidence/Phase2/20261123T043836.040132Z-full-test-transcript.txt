@@ -1,0 +1,35 @@
+test_deployment_requires_distinct_machines_and_safe_values (test_phase2.ConfigTests) ... ok
+test_phase1_source_is_reused_and_firewall_limits_sources (test_phase2.ConfigTests) ... ok
+test_real_ca_standby_certificate_and_nginx_configs (test_phase2.NativeSyntaxTests) ... Created certs/server.crt, certs/server.key and certs/local-ca.crt.
+Copy only local-ca.crt to client Macs; keep local-ca.key private on Mac 2.
+
+Send only this public CSR to Mac 2: /private/var/folders/n8/4j98v_rj2wgdky8_0kcfp4pm0000gn/T/cn-phase2-tls-mq2fwl48/Phase2/certs/standby/server.csr
+Return only the signed certificate and public local-ca.crt to Mac 3: /private/var/folders/n8/4j98v_rj2wgdky8_0kcfp4pm0000gn/T/cn-phase2-tls-mq2fwl48/Phase2/certs/standby/server.crt
+ok
+test_real_dnsmasq_configs_parse (test_phase2.NativeSyntaxTests) ... ok
+test_real_nginx_configuration_syntax (test_phase2.NativeSyntaxTests) ... Created certs/server.crt, certs/server.key and certs/local-ca.crt.
+Copy only local-ca.crt to client Macs; keep local-ca.key private on Mac 2.
+
+ok
+test_real_dns_tls_failover_cache_and_migration (test_phase2.RealIntegration) ... Created certs/server.crt, certs/server.key and certs/local-ca.crt.
+Copy only local-ca.crt to client Macs; keep local-ca.key private on Mac 2.
+
+Send only this public CSR to Mac 2: /private/var/folders/n8/4j98v_rj2wgdky8_0kcfp4pm0000gn/T/cn-phase2-jzt3zqe9/Phase2/certs/standby/server.csr
+Return only the signed certificate and public local-ca.crt to Mac 3: /private/var/folders/n8/4j98v_rj2wgdky8_0kcfp4pm0000gn/T/cn-phase2-jzt3zqe9/Phase2/certs/standby/server.crt
+PASS: Primary and independent backup DNS answer over UDP and TCP with TTL 30
+PASS: Both edges serve A/B over HTTPS with the same trusted CA and correct names
+PASS: Original backend ETag conditional HTTP 304 behavior is preserved
+PASS: Backend A stopped: both edges retry to B with zero failed requests
+PASS: Backend A restarted: passive fail_timeout expires and A/B load balancing resumes
+PASS: Primary DNS stopped: backup still resolves project domain
+PASS: After record change: source DNS serves new IP while real caching resolver serves old IP
+PASS: Real 30-second DNS TTL expiry refreshes cached old IP to new IP
+PASS: Flushing the actual dnsmasq cache immediately fetches the changed answer
+PASS: Original edge stopped: standby independently serves both backends over valid HTTPS
+PASS: Both backends stopped: TLS still validates and Nginx returns HTTP 502
+ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 42.472s
+
+OK

@@ -1,0 +1,14 @@
+{
+  "time_utc": "2026-11-23T04:39:18.638044+00:00",
+  "tests_run": 6,
+  "failed": [],
+  "errors": [],
+  "skipped": [],
+  "all_passed_without_skips": true,
+  "transcript": "Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt",
+  "scope": "One-Mac local rehearsal. Not proof of physical firewall, OS resolver failover, natural DNS cutover or faculty fault recovery.",
+  "source_sha256": {
+    "Phase2/cn.py": "1ca39ee101fa0ce9e2d0745401df859f85ccabef741b1db4fdc3a5c9f034afa6",
+    "Phase2/tests/test_phase2.py": "62c569a87da2cb25e99b7f9783769f84c52886200d607d863c78eae2298a984d"
+  }
+}

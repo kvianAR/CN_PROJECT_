@@ -13,8 +13,8 @@ backend failure/recovery, original ETag/304, standby service and both-backends-d
 See [the machine-written results](LOCAL_TEST_RESULTS.json).
 
 One standalone Nginx test originally used the historical Mac 2 IP and failed on a different Mac.
-It now selects loopback addresses and unused local ports. The user confirmed all six tests passed
-after the fix. The JSON results file records the integration checks, not the full unittest summary.
+It now selects loopback addresses and unused local ports. The saved full-suite summary now records all six tests passing without skips, with source hashes
+matching the current implementation. The complete transcript is retained under Evidence/Phase2/.
 Four-Mac firewall enforcement/rollback, actual OS resolver failover, macOS DNS cache flushing,
 natural DNS cutover and faculty troubleshooting still require the physical LAN.
 

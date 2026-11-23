@@ -112,7 +112,7 @@ end-to-end test. State the exact layer tested and return to the ordinary domain 
 | Real primary/backup/cache dnsmasq config parsing | Passed |
 | Actual CA, separate standby certificate, SAN names and matching key | Passed |
 | Real loopback DNS, TLS, cache, failover, standby and 502 integration | Passed in user's Terminal; machine-written results saved |
-| Standalone Nginx syntax test | Historical-IP fixture corrected; user confirmed the complete six-test suite passed |
+| Complete six-test suite, including standalone Nginx syntax | Machine-recorded PASS: 6/6, no failures/errors/skips; exact source hashes verified |
 | Four-Mac PF enforcement and exact rollback | Pending |
 | OS resolver failover with client-to-backup packet evidence | Pending |
 | Natural client DNS migration and macOS cache-flush evidence | Pending |
@@ -131,8 +131,8 @@ then answer individual viva questions. Every member should explain the whole req
 
 ## Completion record for physical tests
 
-- Test date and network: PENDING.
-- Four current device addresses/interfaces: PENDING.
+- Local rehearsal: 23 November 2026, 04:39 UTC; six tests passed on one Mac. See the saved full-test summary and transcript. Physical LAN evaluation has not been performed.
+- Supplied device addresses: Mac 1 `10.7.31.54`, Mac 2 `192.168.1.7`, Mac 3 `10.7.19.86`, Mac 4 `10.7.5.29`. See DEPLOYMENT_INVENTORY.md. Interfaces/gateways need confirmation on each physical host.
 - A/B/C/D/E/F evidence filenames and measured outcomes: PENDING.
 - Injected fault, diagnosis, repair and post-fix result: PENDING.
 - DNS/firewall/service rollback confirmed on all affected hosts: PENDING.
