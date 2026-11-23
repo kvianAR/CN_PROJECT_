@@ -1,5 +1,6 @@
 """Real local integration tests plus configuration/rollback guard checks."""
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -45,6 +46,35 @@ class ConfigTests(unittest.TestCase):
                 with self.assertRaises(RuntimeError):
                     lab.firewall('restore', 'b')
                 mocked.assert_not_called()
+        # Test transaction ownership without changing the host firewall.
+        for already_enabled in (True, False):
+            with self.subTest(already_enabled=already_enabled), tempfile.TemporaryDirectory() as folder:
+                lab = Lab(defaults(), root=folder)
+                commands = []
+                def fake_run(command, **kwargs):
+                    command = [str(x) for x in command]
+                    commands.append(command)
+                    if command == ['pfctl', '-s', 'rules']:
+                        output = 'anchor "com.apple/*" all\n'
+                    elif command == ['pfctl', '-s', 'info']:
+                        output = 'Status: ' + ('Enabled' if already_enabled else 'Disabled') + '\n'
+                    elif command == ['pfctl', '-E']:
+                        output = 'Token : 12345\n'
+                    else:
+                        output = ''
+                    return subprocess.CompletedProcess(command, 0, output, '')
+                with patch('cn.run', side_effect=fake_run), patch('cn.binary', side_effect=lambda name: name), \
+                     patch('cn.os.geteuid', return_value=0), patch.object(lab, 'require_local_role'), \
+                     patch('sys.stdout', new_callable=io.StringIO), \
+                     patch('cn.shutil.copy2', side_effect=lambda src, dst: Path(dst).write_text('# Original PF fixture\n')):
+                    lab.firewall('apply', 'b')
+                    lab.firewall('restore', 'b')
+                if already_enabled:
+                    self.assertNotIn(['pfctl', '-E'], commands)
+                    self.assertFalse(any('-X' in command for command in commands))
+                else:
+                    self.assertIn(['pfctl', '-E'], commands)
+                    self.assertIn(['pfctl', '-X', '12345'], commands)
 
 
 class NativeSyntaxTests(unittest.TestCase):

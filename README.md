@@ -1,5 +1,11 @@
 # Computer Networks — Phase 1 + Phase 2
 
+**Single-project entry point:** double-click `RUN_CN.command`. It runs the complete local
+rehearsal, saves the full transcript/summary and opens [the combined report](CN_REPORT.html).
+The local rehearsal needs no connection to the other team members' Macs and does not modify
+system DNS or firewall settings. Cross-Mac PF and DNS cutover demonstrations remain separately
+identified in the report.
+
 Phase 2 extends the final Phase 1 commit `52a46de198702b146ec60a2e5d6398dc92ab0def`.
 Original role folders, application source, configuration and Phase 1 evidence are preserved.
 

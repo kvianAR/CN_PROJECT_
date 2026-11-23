@@ -1,0 +1,49 @@
+{
+  "generated_at_utc": "2026-11-23T04:37:10.960011+00:00",
+  "scope": "Static source audit; does not execute network services or firewall rules",
+  "required_files_present": 22,
+  "python_sources_parse": true,
+  "current_source_sha256": {
+    "Phase2/cn.py": "1ca39ee101fa0ce9e2d0745401df859f85ccabef741b1db4fdc3a5c9f034afa6",
+    "Phase2/tests/test_phase2.py": "62c569a87da2cb25e99b7f9783769f84c52886200d607d863c78eae2298a984d"
+  },
+  "suite_status": "6/6 previously confirmed by the user; full transcript/fingerprint was not recorded for that run",
+  "implementation": [
+    {
+      "area": "Phase 1",
+      "behavior": "Private DNS, two REST services, Nginx round robin, trusted TLS, HTTP caching and original evidence",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 A",
+      "behavior": "Independent backup DNS plus client DNS configuration and restore",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 B",
+      "behavior": "TTL 30, real caching resolver, record changes and explicit cache flush",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 C",
+      "behavior": "Backend PF isolation, strict edge allowlist, saved rules and rollback",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 D",
+      "behavior": "Passive backend failover, retry limits, recovery and upstream logging",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 E",
+      "behavior": "Separate standby key, same-CA certificate and DNS-based edge cutover",
+      "status": "implemented"
+    },
+    {
+      "area": "Phase 2 F",
+      "behavior": "Layered diagnosis, controlled failures, command transcripts and packet capture",
+      "status": "implemented"
+    }
+  ],
+  "physical_demonstration": "Not completed; source implementation is delivered separately from physical validation."
+}

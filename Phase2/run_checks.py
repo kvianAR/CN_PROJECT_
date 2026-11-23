@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run the full local rehearsal and save the complete test summary and transcript."""
 import datetime as dt
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -54,6 +55,8 @@ def main():
         'transcript': str(transcript.relative_to(ROOT)),
         'scope': 'One-Mac local rehearsal. Not proof of physical firewall, OS resolver failover, natural DNS cutover or faculty fault recovery.'
     }
+    status['source_sha256'] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+                               for p in (ROOT / 'Phase2/cn.py', ROOT / 'Phase2/tests/test_phase2.py')}
     summary.write_text(json.dumps(status, indent=2) + '\n')
     print('Transcript:', transcript)
     print('Summary:', summary)
@@ -63,7 +66,7 @@ def main():
         previous.update(updated_at_utc=status['time_utc'], full_suite={
             'passed': result.testsRun, 'total': result.testsRun,
             'source': str(summary.relative_to(ROOT)), 'machine_recorded': True,
-            'transcript': status['transcript']})
+            'transcript': status['transcript'], 'source_sha256': status['source_sha256']})
         validation_path.write_text(json.dumps(previous, indent=2) + '\n')
         print(f'PASS: {result.testsRun}/{result.testsRun}. Physical LAN checks remain separate.')
         return 0

@@ -55,8 +55,9 @@ PF rules restrict new inbound backend connections on the configured LAN interfac
 isolation permits the primary edge source only. During edge migration the standby is explicitly
 added as another authorized edge. The helper checks the expected local backend role, requires an
 existing Apple wildcard filter-anchor call, snapshots prior rules, validates proposed rules and
-loads a dedicated subanchor. It records its own PF enable reference and restores only its saved
-anchor/reference. It does not replace the global ruleset or globally disable PF.
+loads a dedicated subanchor. It acquires an enable reference only when PF was disabled and
+preserves a pre-existing enabled state. It restores only its saved anchor/reference. It does not
+replace the global ruleset or globally disable PF.
 
 **Demonstration result:** pending on Mac 3 and Mac 4. Both direct-client denial and simultaneous
 edge access must be recorded with backends running, followed by successful rollback.

@@ -219,8 +219,9 @@ connections to its configured source IP so the allowlist matches predictably.
 
 The helper requires an existing active `com.apple/*` filter anchor. If absent, it refuses to modify
 the global ruleset; consult faculty rather than replacing `/etc/pf.conf`. Before applying, it saves
-root rules, `/etc/pf.conf`, and prior project-anchor rules. It acquires its own PF enable token and
-never disables PF globally. Existing connection states are preserved; use fresh TCP connections.
+root rules, `/etc/pf.conf`, and prior project-anchor rules. If PF is disabled, it acquires its own
+enable token; if already enabled, it leaves the existing enable state untouched. It never disables
+PF globally. Existing connection states are preserved; use fresh TCP connections.
 
 Run these paired checks while both backends remain running:
 

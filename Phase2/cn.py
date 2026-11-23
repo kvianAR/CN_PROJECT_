@@ -315,6 +315,7 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
         root_rules = call('-s', 'rules').stdout
         if not re.search(r'anchor "com\.apple/\*"', root_rules):
             raise RuntimeError('Active root rules do not call com.apple/*. No changes made. Consult faculty.')
+        previously_enabled = bool(re.search(r'Status:\s+Enabled', call('-s', 'info').stdout))
         stamp = str(time.time_ns())
         backup = folder / ('backup-' + stamp)
         backup.mkdir(mode=0o700)
@@ -325,20 +326,27 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
         shutil.copy2('/etc/pf.conf', backup / 'pf.conf')
         write(rules, self.firewall_rules(backend, standby))
         call('-n', '-a', anchor, '-f', str(rules))
-        saved = dict(anchor=anchor, prior_rules=str(prior_path), token=None)
+        saved = dict(anchor=anchor, prior_rules=str(prior_path), token=None,
+                     previously_enabled=previously_enabled, backend=backend)
         write(state, json.dumps(saved, indent=2), private=True)
         try:
-            enabled = call('-E')
-            match = re.search(r'Token\s*:\s*(\d+)', enabled.stdout + enabled.stderr)
-            if not match:
-                raise RuntimeError('PF returned no enable token. Saved rules retained; inspect pfctl status.')
-            saved['token'] = match.group(1)
-            write(state, json.dumps(saved, indent=2), private=True)
+            # An already enabled firewall needs no additional enable reference.
+            # This preserves its pre-existing enable state on project rollback.
+            if not previously_enabled:
+                enabled = call('-E')
+                match = re.search(r'Token\s*:\s*(\d+)', enabled.stdout + enabled.stderr)
+                if not match:
+                    raise RuntimeError('PF returned no enable token. Saved rules retained; inspect pfctl status.')
+                saved['token'] = match.group(1)
+                write(state, json.dumps(saved, indent=2), private=True)
             call('-a', anchor, '-f', str(rules))
         except Exception:
             call('-a', anchor, '-f', str(prior_path), check=False)
             if saved.get('token'):
-                call('-X', saved['token'], check=False)
+                released = call('-X', saved['token'], check=False)
+                if released.returncode == 0:
+                    saved['token'] = None
+                    write(state, json.dumps(saved, indent=2), private=True)
             # Keep active.json for inspection/recovery after a partial failure.
             raise
         print('Applied project rules. Use new TCP connections for tests; existing states are preserved.')
