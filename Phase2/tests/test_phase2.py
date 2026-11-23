@@ -35,6 +35,23 @@ class ConfigTests(unittest.TestCase):
 
     def test_phase1_source_is_reused_and_firewall_limits_sources(self):
         with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for name in ('Mac 1 - DNS', 'Mac 2 - Edge', 'Phase2'):
+                (root / name).mkdir()
+            first = root / 'Mac 1 - DNS/settings.env'
+            second = root / 'Mac 2 - Edge/settings.env'
+            first.write_text('MAC1_IP=192.0.2.1\nMAC2_IP=192.0.2.2\nDOMAIN=team1.test\nUPSTREAM_DNS=192.0.2.254\n')
+            second.write_text('MAC2_IP=192.0.2.2\nMAC3_IP=192.0.2.3\nMAC4_IP=192.0.2.4\nDOMAIN=team1.test\nHTTPS_PORT=8443\n')
+            before = (first.read_bytes(), second.read_bytes())
+            current = defaults()
+            current['mac4'] = '10.7.27.236'
+            template = root / 'Phase2/site.example.json'
+            template.write_text(json.dumps(current))
+            self.assertEqual(defaults(root)['mac4'], '10.7.27.236')
+            self.assertEqual((first.read_bytes(), second.read_bytes()), before)
+            template.unlink()
+            self.assertEqual(defaults(root)['mac4'], '192.0.2.4')
+        with tempfile.TemporaryDirectory() as folder:
             lab = Lab(defaults(), root=folder)
             text = lab.firewall_rules('b')
             self.assertIn('from { ' + lab.c['mac2'] + ' }', text)

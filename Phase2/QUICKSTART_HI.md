@@ -34,7 +34,8 @@ folder mein jaane ke liye `cd "folder ka path"` use karo. `chmod` ki zaroorat na
 
 1. Har Mac par `ipconfig getifaddr en0` chalao. Chaar current IPs note karo.
 2. Har Mac par `networksetup -listallhardwareports` se active interface check karo.
-3. Ek Mac par `python3 Phase2/cn.py configure` chalao. `Phase2/site.json` mein current IPs,
+3. Ek Mac par `python3 Phase2/cn.py configure` chalao. Nayi config Phase 2 template se aayegi;
+   Phase 1 settings change nahi hongi. `Phase2/site.json` mein current IPs,
    router DNS aur interface set karo. Ya README ka `configure --mac1 ...` command use karo.
 4. Same `site.json` sab Macs par copy karo. Private keys aur `runtime` folder copy mat karo.
 5. Mac 2 par pehle se deployed Phase 1 ke certificates/keys rakho. Agar nahi hain, README ke TLS

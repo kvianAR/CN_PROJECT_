@@ -81,12 +81,12 @@ DNS returns the active edge's IP. The client then creates a separate HTTPS conne
 edge. Nginx terminates TLS and forwards HTTP to a backend. Responses travel back through Nginx.
 The DNS server does not carry application traffic.
 
-| Machine | Primary responsibility | Phase 2 addition | Ports |
-|---|---|---|---|
-| **Mac 1** | Private DNS and test client | TTL and controlled record updates | DNS **53**, UDP/TCP |
-| **Mac 2** | HTTPS edge and load balancer | Passive failover and upstream logs | HTTPS **8443**, TCP |
-| **Mac 3** | Backend A | Standby HTTPS edge | **3001** and **8443**, TCP |
-| **Mac 4** | Backend B and test client | Independent backup DNS | **3002**, TCP; **53**, UDP/TCP |
+| Machine | Supplied IPv4 | Primary responsibility | Phase 2 addition | Ports |
+|---|---|---|---|---|
+| **Mac 1** | `10.7.31.54` | Private DNS and test client | TTL and controlled record updates | DNS **53**, UDP/TCP |
+| **Mac 2** | `192.168.1.7` | HTTPS edge and load balancer | Passive failover and upstream logs | HTTPS **8443**, TCP |
+| **Mac 3** | `10.7.19.86` | Backend A | Standby HTTPS edge | **3001** and **8443**, TCP |
+| **Mac 4** | `10.7.27.236` | Backend B and test client | Independent backup DNS | **3002**, TCP; **53**, UDP/TCP |
 
 Use `app.team1.test` or `api.team1.test` for application access. The `.test` namespace avoids
 macOS `.local`/mDNS conflicts. Current supplied addresses are recorded in the

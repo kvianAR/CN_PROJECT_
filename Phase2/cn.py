@@ -30,6 +30,12 @@ def env_file(path):
 
 
 def defaults(root=PROJECT):
+    # Phase 2 owns its deployment addresses. Reading its template first avoids
+    # inheriting historical Phase 1 IPs on a fresh clone or reconfiguration.
+    template = root / 'Phase2/site.example.json'
+    if template.exists():
+        return validate(json.loads(template.read_text()))
+    # Compatibility for a Phase 1-only export that has no Phase 2 template yet.
     dns = env_file(root / 'Mac 1 - DNS/settings.env')
     edge = env_file(root / 'Mac 2 - Edge/settings.env')
     return dict(domain=dns['DOMAIN'], mac1=dns['MAC1_IP'], mac2=edge['MAC2_IP'],
@@ -528,7 +534,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--config', type=Path, default=PROJECT / 'Phase2/site.json')
     sub = parser.add_subparsers(dest='command', required=True)
-    setup = sub.add_parser('configure', help='Import final Phase 1 values; override changed LAN addresses.')
+    setup = sub.add_parser('configure', help='Create Phase 2 settings from its template; override LAN addresses.')
     for k in ('mac1', 'mac2', 'mac3', 'mac4', 'upstream-dns', 'interface', 'domain'):
         setup.add_argument('--' + k)
     for k in ('ttl', 'https-port'):

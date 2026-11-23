@@ -23,8 +23,8 @@ OpenSSL and zsh. On Macs, use Homebrew for missing tools.
 
 ## Verification status
 
-The saved macOS local run passed **6/6 tests without skips**. Its source hashes match the current
-implementation. It covers independent DNS, UDP/TCP queries, real 30-second cache expiry/flush,
+The saved macOS local run passed **6/6 tests without skips**. Its source hashes identify that
+tested revision; the GitHub Actions workflow checks later changes. It covers independent DNS, UDP/TCP queries, real 30-second cache expiry/flush,
 trusted TLS on both edges, A/B balancing, backend failure/recovery, HTTP 304 and upstream HTTP 502.
 
 - [Complete test summary](../Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json)
@@ -58,22 +58,25 @@ python3 Phase2/cn.py configure
 python3 Phase2/cn.py inventory
 ```
 
-`configure` imports the final Phase 1 settings. Those historical IPs may have changed. Obtain each
+`configure` starts from the Phase 2 template in `Phase2/site.example.json` when creating a new
+configuration. Existing `site.json` values are preserved unless explicitly overridden. Phase 1
+settings remain unchanged. Obtain each
 Mac's current IP with `ipconfig getifaddr en0`; confirm its active interface with
 `networksetup -listallhardwareports`. Update all four addresses and the actual router resolver:
 
 ```bash
-python3 Phase2/cn.py configure --mac1 192.168.1.101 --mac2 192.168.1.102 --mac3 192.168.1.103 --mac4 192.168.1.104 --upstream-dns 192.168.1.1 --interface en0
+python3 Phase2/cn.py configure --mac1 10.7.31.54 --mac2 192.168.1.7 --mac3 10.7.19.86 --mac4 10.7.27.236 --interface en0
 ```
 
-The addresses above are examples, not detected settings. Copy the resulting `Phase2/site.json`
+The addresses above are the team-supplied snapshot. Confirm the router DNS and local interface
+separately; these were not supplied as part of the IP update. Copy the resulting `Phase2/site.json`
 to the other Macs. Do not independently choose different domains, backend addresses or TTLs.
 If active interface names differ, set each copy's `interface` to its own local interface.
 The program refuses to start a role on a Mac whose configured interface lacks that role's IP.
 
-The original inventory includes Mac 1 in `10.3.3.x` and other hosts in `10.7.x.x`. Do not assume
-these are one subnet merely because historical campus routing allowed ping. Confirm actual
-routing and device-to-device access on the demonstration network.
+The Phase 1 inventory is a historical record. The supplied Phase 2 Mac 2 address is on another
+private range and belongs to a remote host. Confirm routing and device-to-device access on the
+demonstration network; updating configuration alone does not establish connectivity.
 
 Stop old Phase 1 services in their own terminals before starting the replacement listener on the
 same port. Do not use broad `killall nginx` or `killall dnsmasq` commands.

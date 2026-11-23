@@ -132,7 +132,7 @@ then answer individual viva questions. Every member should explain the whole req
 ## Completion record for physical tests
 
 - Local rehearsal: 23 November 2026, 04:39 UTC; six tests passed on one Mac. See the saved full-test summary and transcript. Physical LAN evaluation has not been performed.
-- Supplied device addresses: Mac 1 `10.7.31.54`, Mac 2 `192.168.1.7`, Mac 3 `10.7.19.86`, Mac 4 `10.7.5.29`. See DEPLOYMENT_INVENTORY.md. Interfaces/gateways need confirmation on each physical host.
+- Supplied device addresses: Mac 1 `10.7.31.54`, Mac 2 `192.168.1.7`, Mac 3 `10.7.19.86`, Mac 4 `10.7.27.236`. See DEPLOYMENT_INVENTORY.md. Interfaces/gateways need confirmation on each physical host.
 - A/B/C/D/E/F evidence filenames and measured outcomes: PENDING.
 - Injected fault, diagnosis, repair and post-fix result: PENDING.
 - DNS/firewall/service rollback confirmed on all affected hosts: PENDING.

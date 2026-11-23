@@ -1,13 +1,13 @@
 {
-  "generated_at_utc": "2026-11-23T04:52:43.652726+00:00",
+  "generated_at_utc": "2026-11-23T04:59:14.945125+00:00",
   "scope": "Static source audit; does not execute network services or firewall rules",
   "required_files_present": 22,
   "python_sources_parse": true,
   "current_source_sha256": {
-    "Phase2/cn.py": "1ca39ee101fa0ce9e2d0745401df859f85ccabef741b1db4fdc3a5c9f034afa6",
-    "Phase2/tests/test_phase2.py": "62c569a87da2cb25e99b7f9783769f84c52886200d607d863c78eae2298a984d"
+    "Phase2/cn.py": "ebda181dbae82d539b0f107e4f39d107407b663fdfebaa53a2006a2b6adf1ea2",
+    "Phase2/tests/test_phase2.py": "f807be69ccae9d206cfa76d09b3aa5adff15d8aa9d6461eaa871abd89906c12a"
   },
-  "suite_status": "Machine-recorded suite matches current sources",
+  "suite_status": "Saved full-suite result predates source changes; rerun CHECK_PROJECT.command",
   "implementation": [
     {
       "area": "Phase 1",
