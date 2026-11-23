@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-11-23T04:43:15.498006+00:00",
+  "generated_at_utc": "2026-11-23T04:52:43.652726+00:00",
   "scope": "Static source audit; does not execute network services or firewall rules",
   "required_files_present": 22,
   "python_sources_parse": true,

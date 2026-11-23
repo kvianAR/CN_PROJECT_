@@ -1,5 +1,7 @@
 # Phase 1 LAN Inventory (Physical 4-Mac Setup)
 
+> **Historical Phase 1 record.** For the combined project, use the [current setup guide](../Phase2/README.md) and [supplied deployment inventory](../Phase2/DEPLOYMENT_INVENTORY.md). Original observations below are retained with their original scope.
+
 Updated for the live physical demonstration network.
 
 | Role | Device / Hostname | Private IPv4 | Subnet/prefix | Gateway | Active interface | Hardware MAC Address | Service & Port | Status |

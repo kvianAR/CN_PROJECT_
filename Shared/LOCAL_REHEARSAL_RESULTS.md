@@ -1,5 +1,7 @@
 # Phase 1 Test & Verification Results (Mac 2 — 10.7.21.150)
 
+> **Historical Phase 1 record.** For the combined project, use the [current setup guide](../Phase2/README.md) and [supplied deployment inventory](../Phase2/DEPLOYMENT_INVENTORY.md). Original observations below are retained with their original scope.
+
 This records the comprehensive Phase 1 test suite executed and verified passing on this machine (`10.7.21.150`).
 
 | Phase 1 Requirement | Test Description | Command Executed | Result | Evidence File / Terminal Image |

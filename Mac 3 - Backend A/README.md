@@ -1,89 +1,82 @@
-# Mac 3 — Backend A Upstream Application Service
+# Mac 3 · Backend A and standby edge
 
-## Role Overview
-- **Machine Role:** Primary Upstream Application Server (Backend A)
-- **Configured IP:** `10.7.7.233`
-- **Listening Interface:** `0.0.0.0` (all interfaces, accessible across private LAN)
-- **Listening Port:** TCP `3001`
-- **Technology:** Python 3 standard library (`http.server.ThreadingHTTPServer`) — Zero external dependencies
-- **Key Features:**
-  - Serves JSON responses with identifying header `X-Backend: A`
-  - Computes SHA-256 ETags for cache validation
-  - Handles `If-None-Match` requests and returns `304 Not Modified`
-  - Emits `Cache-Control: public, max-age=60` headers
+[Project overview](../README.md) · [Standby TLS](../Phase2/README.md#2-preserve-certificate-trust-and-issue-the-standby-certificate) · [Migration demo](../Phase2/README.md#demonstration-e--controlled-edge-migration)
 
----
+Mac 3 runs the unchanged Phase 1 Python service and, in a separate Terminal, the Phase 2 standby edge.
 
-## Prerequisites
-- macOS with Python 3.x (macOS built-in `/usr/bin/python3` is completely sufficient; no `pip` or virtualenv needed).
+| Service | Port | Identity |
+|---|---|---|
+| Backend A | TCP **3001** | `X-Backend: A` |
+| Standby HTTPS edge | TCP **8443** | `X-Edge: standby` |
 
----
+The backend uses Python's standard library. It listens on `0.0.0.0`, serves JSON and supplies
+`Cache-Control` plus ETag validation. Nginx handles the standby HTTPS role.
 
-## Step-by-Step Setup & Launch
+## Start Backend A
 
-### 1. Verify Network Interface
-Ensure Mac 3 is connected to the same Wi-Fi network and check its IP address:
+Use the current shared `Phase2/site.json`. Run from the **repository root**:
+
 ```bash
-ifconfig en0 | grep "inet "
-```
-> **Important:** If the IP address has changed from `10.7.7.233`, update `MAC3_IP` in `Mac 2 - Edge/settings.env` and re-run `python3 render_nginx.py` on Mac 2.
-
-### 2. Verify `settings.env`
-The local `settings.env` specifies the binding host and port:
-```env
-BACKEND_HOST=0.0.0.0
-BACKEND_PORT=3001
+python3 Phase2/cn.py run backend-a
 ```
 
-### 3. Launch Backend A Service
-Run the startup command:
+Keep the Terminal open. Verify in a second Terminal:
+
 ```bash
-cd "Mac 3 - Backend A"
-./start_backend_a.command
-# Or directly:
-python3 backend_a.py
-```
-> Keep this terminal window open during testing. If macOS prompts "Do you want the application to accept incoming network connections?", click **Allow**.
-
----
-
-## Service Endpoints & Verification
-
-### Local Verification on Mac 3
-```bash
-# Test root endpoint
-curl -i http://127.0.0.1:3001/
-# Response: 200 OK, {"backend":"A","message":"Backend A is running","service":"Mac 3"}
-
-# Test API status endpoint
 curl -i http://127.0.0.1:3001/api/status
-# Response: 200 OK, {"backend":"A","status":"ok"}, X-Backend: A
-
-# Test ETag caching (304 Not Modified)
-ETAG=$(curl -s -I http://127.0.0.1:3001/api/status | grep -i ETag | tr -d '\r\n')
-curl -i -H "If-None-Match: $ETAG" http://127.0.0.1:3001/api/status
-# Response: HTTP/1.1 304 Not Modified
 ```
 
-### Remote Verification from Mac 2 (Edge Proxy)
-From Mac 2:
+Expect HTTP **200**, `X-Backend: A` and `{"backend":"A","status":"ok"}`.
+For failure/recovery, stop only this backend Terminal with **Ctrl+C**, then run the same start command
+again. The standby edge has its own process and Terminal.
+
+## Prepare the standby edge
+
+1. Install Nginx if missing: `brew install nginx`.
+2. Create a local standby key and public request:
+
+   ```bash
+   python3 Phase2/cn.py tls csr
+   ```
+
+3. Send **only** `Phase2/certs/standby/server.csr` to Mac 2.
+4. Receive the signed certificate as `Phase2/certs/standby/server.crt`. Keep `server.key` on this Mac.
+5. Start the standby in a separate Terminal:
+
+   ```bash
+   python3 Phase2/cn.py run edge-standby
+   ```
+
+The primary CA remains on Mac 2. Standby readiness requires certificate trust and access to both
+backends before any DNS cutover. See the [full TLS workflow](../Phase2/README.md#2-preserve-certificate-trust-and-issue-the-standby-certificate).
+
+## Backend firewall
+
+Preview before applying on this Mac:
+
 ```bash
-curl -i http://10.7.7.233:3001/api/status
+python3 Phase2/cn.py firewall render --backend a
+python3 Phase2/cn.py firewall apply --backend a
 ```
 
----
+Mac 1 should fail to reach backend ports while Mac 2 succeeds. The domain must continue working.
+For the edge migration stage, the runbook explicitly adds the standby as another permitted edge.
+Local loopback checks on Mac 3 do not prove remote-client isolation.
 
-## High Availability / Failure Testing Role
-During the Phase 1 failover demonstration:
-1. When instructed, press `Ctrl+C` in the terminal to simulate a hard service failure of Backend A.
-2. The team will observe Mac 2 seamlessly redirecting 100% of client traffic to Backend B (Mac 4) with zero downtime.
-3. Re-run `python3 backend_a.py` to restore Backend A and observe Nginx immediately resuming round-robin load balancing.
+Restore the saved project rules after the demonstration:
 
----
+```bash
+python3 Phase2/cn.py firewall restore --backend a
+```
 
-## Troubleshooting
-- **`curl: (7) Failed to connect / No route to host`:**
-  - Mac 3 Wi-Fi is disconnected, asleep, or on a different network.
-  - Verify IP with `ipconfig getifaddr en0`.
-- **`curl: (28) Connection timed out`:**
-  - macOS Application Firewall is blocking incoming connections on port 3001. Go to `System Settings > Network > Firewall` and ensure incoming connections for Python are allowed.
+See the [isolation runbook](../Phase2/README.md#demonstration-c--backend-service-isolation-with-rollback)
+for prerequisites, paired checks and recovery.
+
+## Original Phase 1 backend
+
+```bash
+zsh "Mac 3 - Backend A/start_backend_a.command"
+```
+
+This uses the original `settings.env` and backend source. Use either the original launcher or the
+Phase 2 launcher for port 3001, not both at once.

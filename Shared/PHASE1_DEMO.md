@@ -1,5 +1,7 @@
 # Phase 1 live demonstration and evidence
 
+> **Historical Phase 1 record.** For the combined project, use the [current setup guide](../Phase2/README.md) and [supplied deployment inventory](../Phase2/DEPLOYMENT_INVENTORY.md). Original observations below are retained with their original scope.
+
 ## Collect working evidence
 
 1. **LAN:** show `IP_INVENTORY.md`; on each Mac run `ipconfig getifaddr en0`, `ifconfig en0`, and `route -n get default`. Ping every pair.

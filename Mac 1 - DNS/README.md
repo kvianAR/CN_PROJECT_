@@ -1,93 +1,74 @@
-# Mac 1 — Authoritative Private DNS Server & Test Client
+# Mac 1 · Primary DNS and test client
 
-## Role Overview
-- **Machine Role:** Authoritative DNS Server for the `.test` private domain + Diagnostic Test Client
-- **Configured IP:** `10.3.3.225`
-- **Subnet:** `255.255.224.0` (/19) | Gateway: `10.7.0.1`
-- **Listening Port:** UDP/TCP port `53`
-- **Resolves:**
-  - `app.team1.test` -> `10.7.21.150` (Mac 2 Edge)
-  - `api.team1.test` -> `10.7.21.150` (Mac 2 Edge)
-- **Upstream Forwarding:** Forwards non-local DNS queries to router gateway `10.7.0.1`
+[Project overview](../README.md) · [Full runbook](../Phase2/README.md) · [Troubleshooting](../Phase2/docs/TROUBLESHOOTING.md)
 
----
+Mac 1 maps the private application names to the active edge. In Phase 2 it returns a visible
+**30-second TTL** and supports controlled record changes. Mac 4 supplies an independent backup.
 
-## Prerequisites
-Ensure Homebrew and `dnsmasq` are installed on Mac 1:
+| Item | Value |
+|---|---|
+| Service | dnsmasq |
+| Listener | UDP/TCP **53** |
+| Names | `app.team1.test`, `api.team1.test` |
+| Phase 2 configuration | `Phase2/site.json` |
+| Generated config | `Phase2/runtime/dns-primary/dnsmasq.conf` |
+| Record source | `Phase2/runtime/dns-primary/records.hosts` |
+
+## Before starting
+
+Install `dnsmasq` if missing: `brew install dnsmasq`. Configure current team addresses using the
+[shared setup steps](../Phase2/README.md#1-configuration-and-startup). Verify this Mac's active
+interface and IP. Historical `settings.env` addresses are not today's detected network state.
+
+All Phase 2 commands below run from the **repository root**.
+
+## Start and verify
+
 ```bash
-brew install dnsmasq
+python3 Phase2/cn.py run dns-primary
 ```
 
----
+Leave that Terminal open. The launcher requests administrator access for port 53. In another Terminal:
 
-## Step-by-Step Setup & Launch
-
-### 1. Verify Configuration (`settings.env`)
-Verify the entries in `settings.env`:
-```env
-MAC1_IP=10.3.3.225
-MAC2_IP=10.7.21.150
-DOMAIN=team1.test
-UPSTREAM_DNS=10.7.0.1
-```
-
-### 2. Generate `dnsmasq.conf`
-Generate the active configuration from `settings.env`:
 ```bash
-cd "Mac 1 - DNS"
-python3 render_dns.py
+python3 Phase2/cn.py query primary
+python3 Phase2/cn.py query backup
 ```
-This writes `dnsmasq.conf` mapping `app.team1.test` and `api.team1.test` to `10.7.21.150`.
 
-### 3. Start `dnsmasq`
-Run the start script (requires `sudo` for port 53 binding):
+Both resolvers should return the configured active edge. Direct queries test those resolvers;
+a normal application lookup is needed to demonstrate the client's actual resolver behavior.
+
+## Change the active edge
+
 ```bash
-sudo ./start_dns.command
-# Or directly:
-sudo dnsmasq -C dnsmasq.conf -d
+python3 Phase2/cn.py set-edge standby
+python3 Phase2/cn.py reload-dns dns-primary
 ```
-> Keep this terminal window open during testing.
 
----
+Repeat the matching change and reload on Mac 4's backup DNS. Changing one copy does not update the
+other Mac. `reload-dns` verifies the process identity before rereading records.
 
-## Verification & Testing
+For rollback, use `set-edge primary` on both DNS hosts and reload their matching services.
 
-### Local Test on Mac 1
+## Backup DNS demonstration
+
+1. Confirm clients list both DNS servers and trust the edge CA.
+2. Start packet capture and flush the client's OS cache.
+3. Stop this primary DNS with **Ctrl+C** in its own Terminal.
+4. Run `python3 Phase2/cn.py verify dns-backup` from a client.
+5. Show the query arriving at Mac 4, then restart primary DNS.
+
+See the [complete backup-DNS demo](../Phase2/README.md#demonstration-a--independent-backup-dns)
+for commands, evidence and cache caveats.
+
+## Original Phase 1 startup
+
+Edit this folder's `settings.env`, then run from the repository root:
+
 ```bash
-# Query local loopback
-dig @127.0.0.1 app.team1.test +short
-# Expected output: 10.7.21.150
-
-dig @127.0.0.1 api.team1.test +short
-# Expected output: 10.7.21.150
-
-# Test upstream forwarding (e.g. google.com)
-dig @127.0.0.1 google.com +short
+zsh "Mac 1 - DNS/start_dns.command"
 ```
 
-### Remote Verification from Client Macs (Mac 2, Mac 3, Mac 4)
-From any other Mac on the network:
-```bash
-dig @10.3.3.225 app.team1.test +short
-# Expected: 10.7.21.150
-```
-
----
-
-## Wireshark Packet Capture Instructions
-To capture DNS traffic for graded evidence:
-1. Open Wireshark on Mac 1 or Mac 4 (client).
-2. Select active interface (`en0` / Wi-Fi).
-3. Set capture filter: `port 53`
-4. Send test query: `dig @10.3.3.225 app.team1.test`
-5. Observe and verify:
-   - Standard query `A app.team1.test` from Client to `10.3.3.225:53`
-   - Standard query response `A 10.7.21.150` from `10.3.3.225:53` to Client
-6. Save capture as `Evidence/10-Wireshark/01-dns-resolution.pcapng`.
-
----
-
-## Troubleshooting
-- **Permission denied (port 53):** Port 53 is a privileged port; `sudo` is strictly required.
-- **Address already in use:** Another DNS daemon (e.g., mDNSResponder or prior dnsmasq) is running. Check with `sudo lsof -i :53` and stop conflicting services.
-- **Connection timed out from remote Macs:** Ensure macOS Firewall is allowing incoming connections (`System Settings > Network > Firewall`).
+It regenerates the original config and starts DNS. Stop the Phase 2 listener before using the
+original one on the same address/port. A wrong listening IP causes an address error; changing file
+permissions does not repair network addressing.

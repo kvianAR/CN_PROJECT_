@@ -1,11 +1,27 @@
 # Phase 1 + Phase 2 — stepwise setup
 
+[Project overview](../README.md) · [Detailed runbook](README.md) · [Troubleshooting](docs/TROUBLESHOOTING.md)
+
 Poora project ek hi `CN_PROJECT_` folder mein hai. GitHub ka final Phase 1 preserve hai.
 Phase 2 isi project ke andar add hua hai. Purane Downloads folder ko is setup mein use na karein.
 
-## Pehle isi Mac par test
+## A. Pehle apne Mac par local rehearsal
 
-Terminal mein repository folder ke andar yeh command chalao:
+Naya clone chahiye toh:
+
+```bash
+git clone https://github.com/kvianAR/CN_PROJECT_.git
+cd CN_PROJECT_
+```
+
+Ab project folder ke andar:
+
+```bash
+./RUN_CN.command
+```
+
+Ye full test suite chalata hai, transcript/summary save karta hai aur report kholta hai.
+Sirf tests chalane ka alternate command:
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 CN_RUN_INTEGRATION=1 python3 -u -m unittest discover -s Phase2/tests -v
@@ -14,7 +30,7 @@ PYTHONDONTWRITEBYTECODE=1 CN_RUN_INTEGRATION=1 python3 -u -m unittest discover -
 Lagbhag ek minute. `Ran 6 tests` ke baad `OK` chahiye. Directory ka path akela command nahi hai;
 folder mein jaane ke liye `cd "folder ka path"` use karo. `chmod` ki zaroorat nahi.
 
-## Chaar Macs milne par
+## B. Four-Mac deployment
 
 1. Har Mac par `ipconfig getifaddr en0` chalao. Chaar current IPs note karo.
 2. Har Mac par `networksetup -listallhardwareports` se active interface check karo.
@@ -38,7 +54,7 @@ folder mein jaane ke liye `cd "folder ka path"` use karo. `chmod` ki zaroorat na
 9. Public CA certificate trust karo. Private CA key sirf Mac 2 par rakho.
 10. `python3 Phase2/cn.py verify baseline` chalao. Sab PASS ke baad six demos karo.
 
-## Demo order
+## C. Six demos ka order
 
 1. Primary DNS stop, client cache flush, `verify dns-backup`; backup query ka packet/log dikhana hai.
 2. TTL cache prime, dono DNS records badlo, old/new answer aur expiry dikhana hai.

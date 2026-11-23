@@ -1,388 +1,198 @@
-# Computer Networks — Phase 1 + Phase 2
+<p align="center">
+  <img src=".github/assets/cn-banner.svg" alt="Private Network Service Platform — Computer Networks, Phase 1 and Phase 2" width="100%">
+</p>
 
-**Single-project entry point:** double-click `RUN_CN.command`. It runs the complete local
-rehearsal, saves the full transcript/summary and opens [the combined report](CN_REPORT.html).
-The local rehearsal needs no connection to the other team members' Macs and does not modify
-system DNS or firewall settings. Cross-Mac PF and DNS cutover demonstrations remain separately
-identified in the report.
+<p align="center">
+  <a href="https://github.com/kvianAR/CN_PROJECT_/actions/workflows/phase2.yml"><img src="https://github.com/kvianAR/CN_PROJECT_/actions/workflows/phase2.yml/badge.svg" alt="Phase 2 checks"></a>
+</p>
 
-Phase 2 extends the final Phase 1 commit `52a46de198702b146ec60a2e5d6398dc92ab0def`.
-Original role folders, application source, configuration and Phase 1 evidence are preserved.
+# CN Project
 
-**Start here:** [Phase 2 setup and six demonstrations](Phase2/README.md).
+**One repository. Two phases. A complete request path you can explain.**
 
-**Remaining live work:** [four-Mac completion checklist](Phase2/REMAINING_LIVE_TESTS.md).
-Double-click `CHECK_PROJECT.command` to run all local checks and save their full transcript/summary.
+A local networking platform built with **dnsmasq, Nginx, OpenSSL and two Python REST services**.
+A client resolves a private domain, connects over trusted HTTPS, and receives a response from one
+of two backends. Phase 2 extends that system with DNS redundancy, cache experiments, service
+isolation, backend recovery and controlled edge migration.
 
-- [Mac-by-Mac quick start](Phase2/QUICKSTART_HI.md)
-- [Phase 2 report and honest demonstration status](Phase2/REPORT.md)
-- [Troubleshooting and recovery](Phase2/docs/TROUBLESHOOTING.md)
-- [Evidence checklist](Evidence/Phase2/README.md)
+[Quick start](#quick-start) · [Architecture](#architecture) · [Features](#what-is-included) ·
+[Demo guide](Phase2/README.md) · [Test evidence](#verification) · [Documentation](#documentation)
 
-Phase 2 generated configuration lives under `Phase2/runtime/`. Do not start Phase 1 and Phase 2
-listeners on the same addresses and ports at once. Stop each old service in its own terminal first.
-All service startup commands run in the foreground and stop with Ctrl+C.
+> **Verified:** the saved local suite passed **6/6 tests, with no failures or skips**. The first
+> GitHub Actions run also passed. Physical four-Mac firewall and client DNS cutover evidence has
+> a separate status in the [report](Phase2/REPORT.md).
 
-## Verified local test run
+## Quick start
 
-The complete six-test suite passed without failures, errors or skips. Saved source hashes match
-the current implementation. The [summary](Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json)
-and [full transcript](Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt) are included.
-These are local rehearsal results; physical four-Mac demonstrations retain their separate status.
+### Run everything locally
 
-The Phase 1 documentation below is retained as the historical baseline.
+The local rehearsal starts temporary services on unused loopback ports. It needs no connection
+to the other team members' Macs and leaves system DNS and firewall settings unchanged.
 
----
-
-# Computer Networks — Phase 1
-
-A private-LAN networking architecture demonstrating core computer networking concepts using four macOS machines on a shared Wi-Fi network. This project implements:
-
-- **Private DNS** — custom `dnsmasq` resolver for the `.test` domain
-- **REST Backends** — two Python HTTP servers with JSON API endpoints
-- **nginx Reverse Proxy** — edge server terminating HTTPS and forwarding to backends
-- **Round-Robin Load Balancing** — nginx distributes requests across Backend A and Backend B
-- **HTTPS / TLS** — self-signed CA with trusted certificates; TLS 1.2 on the edge
-- **HTTP Caching** — `Cache-Control`, `ETag`, and `304 Not Modified` conditional responses
-- **Wireshark Packet Analysis** — DNS, TCP, and TLS packet captures for protocol evidence
-
----
-
-## Team Members
-
-1. **Abhijeet Dey**
-2. **Aditya Ranjan**
-3. **Samriddhi Shah**
-4. **Satwik Mani Triphati**
-
----
-
-## Project Architecture
-
-### Network Topology
-
-```
-                           Private Wi-Fi / LAN
-      ┌────────────────────────────────────────────────────────┐
-      │                                                        │
-      │ Mac 1: DNS + Client           Mac 4: Backend B + Client│
-      │ 10.3.3.225                    10.7.5.29                │
-      │ DNS port 53                   HTTP port 3002           │
-      │     │ DNS query                   │                    │
-      │     └─────┐                       │                    │
-      │           ▼                       │                    │
-      │       app.team1.test → 10.7.21.150                     │
-      │           │                                            │
-      │           ▼ HTTPS/TCP 8443                             │
-      │     Mac 2: nginx Edge + TLS + Round Robin              │
-      │     10.7.21.150                                        │
-      │           ├──────── HTTP/TCP 3001 ──→ Mac 3: Backend A │
-      │           │                           10.7.16.120      │
-      │           └──────── HTTP/TCP 3002 ──→ Mac 4: Backend B │
-      │                                       10.7.5.29        │
-      └────────────────────────────────────────────────────────┘
-```
-
-### Request Flow
-
-```
-Client (Mac 1 or Mac 4)
-  │
-  ├─ 1. DNS query to Mac 1 (10.3.3.225:53)
-  │     → app.team1.test resolves to 10.7.21.150 (Mac 2)
-  │
-  ├─ 2. HTTPS connection to Mac 2 (10.7.21.150:8443)
-  │     → TLS 1.2 handshake, certificate validated against local CA
-  │
-  ├─ 3. nginx reverse proxy on Mac 2
-  │     → Terminates TLS, forwards HTTP to backend pool
-  │
-  └─ 4. Round-robin to one of:
-        → Backend A on Mac 3 (10.7.16.120:3001) — X-Backend: A
-        → Backend B on Mac 4 (10.7.5.29:3002)   — X-Backend: B
-```
-
-Both `app.team1.test` and `api.team1.test` resolve to Mac 2. Mac 2 terminates TLS and uses plain HTTP inside the private LAN to reach the backends. Clients never contact backends directly — they only know the edge domain.
-
----
-
-## Machine / Service Table
-
-| Machine | Role                  | IP Address      | Service         | Port  |
-|---------|-----------------------|-----------------|-----------------|-------|
-| Mac 1   | DNS Server + Client   | `10.3.3.225`    | dnsmasq         | 53    |
-| Mac 2   | Edge / Reverse Proxy  | `10.7.21.150`   | nginx (HTTPS)   | 8443  |
-| Mac 3   | Backend A             | `10.7.16.120`   | Python REST API | 3001  |
-| Mac 4   | Backend B + Client    | `10.7.5.29`     | Python REST API | 3002  |
-
-> **Note:** These IP addresses are from the current `settings.env` configurations. If the Wi-Fi network changes on demonstration day, update the `settings.env` files on each Mac and regenerate configs using the provided render scripts.
-
----
-
-## Running the Backends
-
-Both backends are pure Python 3 (standard library only — no `pip install` needed). Each backend reads its configuration from a `settings.env` file and binds to `0.0.0.0` so it is reachable over the LAN.
-
-### Backend A — Mac 3
-
-| Property               | Value                                              |
-|-------------------------|----------------------------------------------------|
-| **Source file**         | `Mac 3 - Backend A/backend_a.py`                   |
-| **Start script**        | `Mac 3 - Backend A/start_backend_a.command`         |
-| **Dependencies**        | Python 3 (pre-installed on macOS) — no pip packages |
-| **Port**                | `3001`                                              |
-| **Bind address**        | `0.0.0.0`                                           |
-| **Health endpoint**     | `GET /api/status` → `{"backend":"A","status":"ok"}` |
-| **X-Backend header**    | `A`                                                 |
+**Prerequisites:** Python 3, Nginx, dnsmasq, OpenSSL and zsh. Install missing tools on macOS:
 
 ```bash
-# Option 1: Double-click the .command file
-open "Mac 3 - Backend A/start_backend_a.command"
-
-# Option 2: Run from Terminal
-cd "Mac 3 - Backend A"
-source ./settings.env
-python3 backend_a.py
+brew install python nginx dnsmasq openssl
 ```
 
-Verify it is running:
+Clone and run:
 
 ```bash
-curl -i http://127.0.0.1:3001/api/status
-# Expected: HTTP/1.1 200 OK
-# X-Backend: A
-# {"backend":"A","status":"ok"}
+git clone https://github.com/kvianAR/CN_PROJECT_.git
+cd CN_PROJECT_
+./RUN_CN.command
 ```
 
-### Backend B — Mac 4
+Already have the project? Open its folder and double-click **`RUN_CN.command`**.
 
-| Property               | Value                                              |
-|-------------------------|----------------------------------------------------|
-| **Source file**         | `Mac 4 - Backend B/backend_b.py`                   |
-| **Start script**        | `Mac 4 - Backend B/start_backend_b.command`         |
-| **Dependencies**        | Python 3 (pre-installed on macOS) — no pip packages |
-| **Port**                | `3002`                                              |
-| **Bind address**        | `0.0.0.0`                                           |
-| **Health endpoint**     | `GET /api/status` → `{"backend":"B","status":"ok"}` |
-| **X-Backend header**    | `B`                                                 |
+| What happens | Where to find it |
+|---|---|
+| All six local tests run | Terminal output |
+| Full transcript and structured summary are saved | `Evidence/Phase2/` |
+| A combined report opens in your browser | `CN_REPORT.html` |
+| Temporary services stop when tests finish | No persistent demo services remain |
 
-```bash
-# Option 1: Double-click the .command file
-open "Mac 4 - Backend B/start_backend_b.command"
+The rehearsal takes about a minute. If a check fails or is skipped, the launcher reports it.
+It does not label incomplete tests as passes.
 
-# Option 2: Run from Terminal
-cd "Mac 4 - Backend B"
-source ./settings.env
-python3 backend_b.py
+### Deploy on the team Macs
+
+Start with the [stepwise guide](Phase2/QUICKSTART_HI.md), then follow the
+[deployment and demonstration runbook](Phase2/README.md).
+
+Each machine needs current IPs, reachable peer services and the correct certificate setup.
+Separate private networks need working routing or another approved connectivity arrangement;
+matching project files alone does not connect remote Macs.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    C["Client"] -->|DNS lookup| D["Primary and backup DNS"]
+    C -->|"HTTPS · 8443"| E["Primary Nginx edge"]
+    C -. "After DNS cutover" .-> S["Standby Nginx edge"]
+    E -->|"HTTP · 3001"| A["Backend A"]
+    E -->|"HTTP · 3002"| B["Backend B"]
+    S --> A
+    S --> B
 ```
 
-Verify it is running:
+DNS returns the active edge's IP. The client then creates a separate HTTPS connection to that
+edge. Nginx terminates TLS and forwards HTTP to a backend. Responses travel back through Nginx.
+The DNS server does not carry application traffic.
 
-```bash
-curl -i http://127.0.0.1:3002/api/status
-# Expected: HTTP/1.1 200 OK
-# X-Backend: B
-# {"backend":"B","status":"ok"}
-```
+| Machine | Primary responsibility | Phase 2 addition | Ports |
+|---|---|---|---|
+| **Mac 1** | Private DNS and test client | TTL and controlled record updates | DNS **53**, UDP/TCP |
+| **Mac 2** | HTTPS edge and load balancer | Passive failover and upstream logs | HTTPS **8443**, TCP |
+| **Mac 3** | Backend A | Standby HTTPS edge | **3001** and **8443**, TCP |
+| **Mac 4** | Backend B and test client | Independent backup DNS | **3002**, TCP; **53**, UDP/TCP |
 
-### API Endpoints (both backends)
+Use `app.team1.test` or `api.team1.test` for application access. The `.test` namespace avoids
+macOS `.local`/mDNS conflicts. Current supplied addresses are recorded in the
+[deployment inventory](Phase2/DEPLOYMENT_INVENTORY.md); verify them before a physical demo.
 
-| Method | Path          | Response (200)                                       | Notes                           |
-|--------|---------------|------------------------------------------------------|---------------------------------|
-| GET    | `/`           | `{"backend":"A/B","message":"...","service":"..."}` | Root info                       |
-| GET    | `/api/status` | `{"backend":"A/B","status":"ok"}`                   | Health check                    |
-| HEAD   | any           | Headers only, no body                                | Supports HEAD requests          |
-| GET    | other paths   | `{"backend":"A/B","error":"Not Found"}` (404)       | —                               |
+## What is included
 
-All responses include `Cache-Control: public, max-age=60`, `ETag`, and `X-Backend` headers. Conditional requests with `If-None-Match` return `304 Not Modified` when the ETag matches.
+### Phase 1 · Build and observe
 
----
+| Feature | What it demonstrates |
+|---|---|
+| Private DNS | Both project names resolve to the edge |
+| Two REST backends | Simple JSON services with distinct backend identifiers |
+| Nginx reverse proxy | One HTTPS entry point for both applications |
+| Round-robin balancing | Responses from both A and B |
+| Trusted TLS | Certificate name/chain validation at the edge |
+| HTTP caching | `Cache-Control`, ETag and conditional `304 Not Modified` |
+| Packet evidence | DNS, TCP and TLS observations from the original submission |
 
-## Setting Up the DNS Server — Mac 1
+### Phase 2 · Harden and recover
 
-1. Edit `Mac 1 - DNS/settings.env` — set `MAC1_IP` and `MAC2_IP` to the real LAN addresses.
-2. Install dnsmasq: `brew install dnsmasq`
-3. Generate the config: `python3 render_dns.py` (from the `Mac 1 - DNS/` directory)
-4. Start: `./start_dns.command` (or double-click). Keep the Terminal open.
-5. Verify: `dig @127.0.0.1 app.team1.test +short` → should return Mac 2's IP.
-6. On Mac 2 and Mac 4, set DNS to Mac 1's IP in **System Settings → Network → Wi-Fi → Details → DNS**.
+| Extension | Implementation | Demonstration |
+|---|---|---|
+| **A · Backup DNS** | Independent resolver with the same records | Stop primary; resolve through backup |
+| **B · TTL and caching** | TTL **30 seconds**, reloadable records and a real caching resolver | Compare changed source answer with cached answer; expire or flush |
+| **C · Service isolation** | Backend PF allowlist, saved rules and rollback | Client denied; edge allowed; application works |
+| **D · Backend recovery** | Passive failure detection, bounded retries and recovery | Stop A; observe B; restart A; observe both |
+| **E · Edge migration** | Standby Nginx, separate key and same-CA certificate | Update both resolvers; observe `X-Edge: standby` |
+| **F · Troubleshooting** | Layered diagnostics, logs and capture commands | Isolate DNS, TCP, TLS, proxy or backend faults |
 
----
+Backend source is reused from the final Phase 1 baseline. No web framework, database or Python
+package installation is required for the application services.
 
-## Setting Up the Edge / Reverse Proxy — Mac 2
+## Choose the right launcher
 
-1. Edit `Mac 2 - Edge/settings.env` — set `MAC2_IP`, `MAC3_IP`, `MAC4_IP`.
-2. Install nginx: `brew install nginx`
-3. Generate the TLS certificate (once): `./create_certificate.command`
-4. Generate nginx config: `python3 render_nginx.py`
-5. Start: `./start_edge.command` (or double-click). Keep the Terminal open.
-6. Share `certs/local-ca.crt` with client Macs and trust it in the System keychain.
-7. **Never share** `local-ca.key` or `server.key`.
+| Entry point | Use it for |
+|---|---|
+| **`RUN_CN.command`** | Full local rehearsal, saved results and combined report |
+| **`CHECK_PROJECT.command`** | Full local test suite and saved evidence |
+| **`START_PHASE2.command`** | One foreground service at a time on its assigned Mac |
+| `python3 Phase2/cn.py --help` | Configuration, verification, DNS, TLS, firewall and diagnostics |
+| `python3 Phase2/finalize.py` | Refresh the report from saved results without running services |
 
----
+Stop a foreground service with **Ctrl+C** in its own Terminal. Do not start Phase 1 and Phase 2
+listeners on the same machine/address/port simultaneously.
 
-## Startup Order (Four-Mac Demo)
+## API and response headers
 
-| Step | Machine | Action                                                                   |
-|------|---------|--------------------------------------------------------------------------|
-| 1    | All     | Connect all four Macs to the same private Wi-Fi. Fill `Shared/IP_INVENTORY.md`. Ping every pair. |
-| 2    | Mac 3   | Edit `settings.env` if needed → run `start_backend_a.command`            |
-| 3    | Mac 4   | Edit `settings.env` if needed → run `start_backend_b.command`            |
-| 4    | Mac 2   | Edit `settings.env` → `brew install nginx` → `./create_certificate.command` → `./start_edge.command` |
-| 5    | Mac 1   | Edit `settings.env` → `brew install dnsmasq` → `./start_dns.command`    |
-| 6    | Mac 2, 4| Set DNS to Mac 1's IP. Trust `local-ca.crt` from Mac 2.                  |
-| 7    | Client  | Run `Shared/verify_phase1.command` to validate the full flow.            |
+| Request | Response |
+|---|---|
+| `GET /` | Service and backend information |
+| `GET /api/status` | `{"backend":"A","status":"ok"}` or the equivalent for B |
+| `HEAD /api/status` | Response headers without a body |
+| Conditional GET/HEAD with a matching ETag | `304 Not Modified` |
+| Unknown path | `404 Not Found` |
 
-Each `.command` file can be double-clicked in Finder or run from Terminal. Keep its Terminal window open while demonstrating. Press **Ctrl+C** to stop a service.
+| Header | Meaning |
+|---|---|
+| `X-Backend: A` / `B` | Application instance that served the response |
+| `X-Edge: primary` / `standby` | Phase 2 edge that handled the request |
+| `Cache-Control: public, max-age=60` | HTTP response freshness policy |
+| `ETag` | Validator for that backend's representation |
 
----
+**DNS TTL and HTTP cache freshness are different.** A matching ETag belongs to the backend's
+representation; a conditional request routed to the other backend may return `200` instead of `304`.
+Nginx does not configure a proxy micro-cache in this project.
 
 ## Verification
 
-### Quick End-to-End Test
+| Evidence | Result and scope |
+|---|---|
+| [Full six-test summary](Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json) | **6/6 passed**, no failures/errors/skips; exact source hashes saved |
+| [Complete test transcript](Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt) | Actual local commands and service observations |
+| [Eleven integration findings](Phase2/LOCAL_TEST_RESULTS.json) | Real DNS, TTL expiry, TLS, load balancing and failure/recovery checks |
+| [GitHub Actions](https://github.com/kvianAR/CN_PROJECT_/actions) | Automated configuration, TLS and loopback integration checks |
+| [Physical demonstration checklist](Phase2/REMAINING_LIVE_TESTS.md) | Tracks the separate four-Mac requirements |
 
-From a client Mac with DNS configured and CA trusted:
+Local and CI checks do not replace cross-Mac PF enforcement, actual OS resolver selection,
+natural client DNS cutover or the faculty-injected challenge. See the
+[Phase 2 report](Phase2/REPORT.md) for the recorded status.
 
-```bash
-# DNS resolution
-dig app.team1.test +short
-# Expected: 10.7.21.150
+## Documentation
 
-# HTTPS with certificate validation (no -k flag)
-curl -I https://app.team1.test:8443/api/status
+| I want to… | Open |
+|---|---|
+| Start with short, stepwise instructions | [Quick start · Hinglish](Phase2/QUICKSTART_HI.md) |
+| Run all six Phase 2 demonstrations | [Complete runbook](Phase2/README.md) |
+| Set up a particular machine | [Mac 1](Mac%201%20-%20DNS/README.md) · [Mac 2](Mac%202%20-%20Edge/README.md) · [Mac 3](Mac%203%20-%20Backend%20A/README.md) · [Mac 4](Mac%204%20-%20Backend%20B/README.md) |
+| Diagnose a fault and recover | [Troubleshooting](Phase2/docs/TROUBLESHOOTING.md) |
+| Find screenshots, captures or test output | [Evidence index](Evidence/README.md) |
+| Read the academic report | [Phase 2 report](Phase2/REPORT.md) |
+| Read the course specification | [Project document](Shared/CN_Project_Doc.pdf) |
+| Understand the topology and original Phase 1 work | [Shared documents](Shared/README.md) |
 
-# Round-robin: run twice, observe X-Backend alternating A ↔ B
-curl -s -I https://app.team1.test:8443/api/status | grep X-Backend
-curl -s -I https://app.team1.test:8443/api/status | grep X-Backend
+Generated configs, PIDs, machine-specific settings and private keys stay outside the tracked
+source. Share public CA certificates and standby CSRs as instructed; keep private keys on their
+own hosts. The runbook includes DNS and firewall rollback procedures.
 
-# Caching / Conditional 304
-ETAG=$(curl -s -I https://app.team1.test:8443/api/status | grep -i etag | tr -d '\r' | awk '{print $2}')
-curl -s -o /dev/null -w "%{http_code}" -H "If-None-Match: $ETAG" https://app.team1.test:8443/api/status
-# Expected: 304
-```
+## Team and project history
 
-### Automated Verification Script
+**Abhijeet Dey · Aditya Ranjan · Samriddhi Shah · Satwik Mani Triphati**
 
-```bash
-cd Shared
-./verify_phase1.command
-```
+This repository extends [CWAbhi/CN_PROJECT_](https://github.com/CWAbhi/CN_PROJECT_).
+The final Phase 1 baseline is commit
+[`52a46de`](https://github.com/kvianAR/CN_PROJECT_/commit/52a46de198702b146ec60a2e5d6398dc92ab0def).
+Phase 1 source/configuration and original evidence remain available in the same repository;
+documentation has been refreshed for the combined project.
 
-This script checks DNS, HTTPS certificate validation, A/B load balancing, cache headers, and conditional `304` responses.
-
----
-
-## Wireshark Packet Analysis
-
-Start a Wireshark capture on the client's active Wi-Fi interface **before** making requests.
-
-**Display filter:** `dns or tcp.port == 8443`
-
-Observable protocol layers:
-
-| Layer         | Protocol     | What to look for                                              |
-|---------------|-------------|---------------------------------------------------------------|
-| Application   | DNS          | Query for `app.team1.test`, response with Mac 2's IP          |
-| Transport     | UDP 53       | DNS query/response packets                                    |
-| Transport     | TCP 8443     | SYN → SYN-ACK → ACK (three-way handshake)                    |
-| Security      | TLS 1.2      | ClientHello, ServerHello, Certificate, ChangeCipherSpec, Finished |
-| Application   | HTTPS        | Encrypted application data (viewable via `curl -v` or browser)|
-
-On Mac 2, a separate capture with filter `tcp.port == 3001 or tcp.port == 3002` shows the HTTP connections to backends.
-
-Save `.pcapng` captures in the `Evidence/` directory.
-
----
-
-## Phase 1 Failure Scenarios
-
-| # | Scenario                | What to do                                                       | Expected result                    |
-|---|-------------------------|------------------------------------------------------------------|------------------------------------|
-| 1 | Wrong client DNS        | Set client DNS to a different resolver                           | `dig app.team1.test` fails; `ping` to Mac 2 still works |
-| 2 | Wrong DNS answer        | Change `MAC2_IP` in Mac 1 to an unused IP, restart DNS          | DNS resolves but HTTPS connection fails |
-| 3 | One backend stopped     | Stop Backend A (Ctrl+C on Mac 3)                                | nginx routes all traffic to Backend B |
-| 4 | Both backends stopped   | Stop both A and B                                                | DNS/TLS succeed; nginx returns `502 Bad Gateway` |
-| 5 | Wrong destination port  | `curl -v --connect-timeout 3 https://app.team1.test:8444/`      | Host resolves but connection refused |
-
-Restore original configuration after each failure test. Save evidence in `Evidence/`.
-
----
-
-## Project Structure
-
-```
-CN_Project/
-├── README.md                          ← This file
-├── Mac 1 - DNS/
-│   ├── README.md                      ← DNS setup instructions
-│   ├── settings.env                   ← MAC1_IP, MAC2_IP, DOMAIN, UPSTREAM_DNS
-│   ├── dnsmasq.conf                   ← Generated dnsmasq configuration
-│   ├── render_dns.py                  ← Script to regenerate dnsmasq.conf from settings.env
-│   └── start_dns.command              ← Start the DNS server
-├── Mac 2 - Edge/
-│   ├── README.md                      ← Edge/nginx setup instructions
-│   ├── settings.env                   ← MAC2_IP, MAC3_IP, MAC4_IP, DOMAIN, HTTPS_PORT
-│   ├── nginx.conf                     ← Generated nginx configuration
-│   ├── render_nginx.py                ← Script to regenerate nginx.conf from settings.env
-│   ├── create_certificate.command     ← Generate local CA + server TLS certificate
-│   ├── start_edge.command             ← Start nginx
-│   └── certs/                         ← TLS certificates and keys
-├── Mac 3 - Backend A/
-│   ├── README.md                      ← Backend A setup instructions
-│   ├── settings.env                   ← BACKEND_HOST, BACKEND_PORT
-│   ├── backend_a.py                   ← Python REST API server (port 3001)
-│   └── start_backend_a.command        ← Start Backend A
-├── Mac 4 - Backend B/
-│   ├── README.md                      ← Backend B setup instructions
-│   ├── settings.env                   ← BACKEND_HOST, BACKEND_PORT
-│   ├── backend_b.py                   ← Python REST API server (port 3002)
-│   └── start_backend_b.command        ← Start Backend B
-├── Shared/
-│   ├── IP_INVENTORY.md                ← LAN IP inventory (fill on demo day)
-│   ├── TOPOLOGY.md                    ← Network topology diagram
-│   ├── PHASE1_DEMO.md                 ← Detailed demonstration and evidence steps
-│   ├── verify_phase1.command          ← Automated end-to-end verification script
-│   ├── test_on_this_mac.command       ← One-laptop rehearsal test
-│   ├── show_network.command           ← Show current Mac's network info
-│   └── CN_Project_Doc.pdf             ← Project specification document
-└── Evidence/
-    └── README.md                      ← Instructions for saving demo evidence
-```
-
----
-
-## Technology Stack
-
-| Component        | Technology                                    |
-|------------------|-----------------------------------------------|
-| DNS Server       | dnsmasq (via Homebrew)                        |
-| Reverse Proxy    | nginx (via Homebrew) with TLS 1.2             |
-| TLS Certificates | OpenSSL (self-signed local CA)                |
-| Backends         | Python 3 `http.server` (standard library)     |
-| Operating System | macOS                                         |
-| Network          | Private Wi-Fi LAN                             |
-| Packet Analysis  | Wireshark                                     |
-
----
-
-## Configuration Reference
-
-Each machine's `settings.env` controls its behavior. The key variables are:
-
-| Variable        | File                          | Purpose                                       |
-|-----------------|-------------------------------|-----------------------------------------------|
-| `MAC1_IP`       | Mac 1 - DNS/settings.env      | DNS server listen address                     |
-| `MAC2_IP`       | Mac 1 & Mac 2 settings.env    | Edge server IP (DNS answer + nginx listen)    |
-| `MAC3_IP`       | Mac 2 - Edge/settings.env     | Backend A address for nginx upstream          |
-| `MAC4_IP`       | Mac 2 - Edge/settings.env     | Backend B address for nginx upstream          |
-| `DOMAIN`        | Mac 1 & Mac 2 settings.env    | Domain name (default: `team1.test`)           |
-| `UPSTREAM_DNS`  | Mac 1 - DNS/settings.env      | Router/gateway DNS for non-`.test` queries    |
-| `HTTPS_PORT`    | Mac 2 - Edge/settings.env     | HTTPS listen port (default: `8443`)           |
-| `BACKEND_HOST`  | Mac 3 & Mac 4 settings.env    | Backend bind address (default: `0.0.0.0`)     |
-| `BACKEND_PORT`  | Mac 3 & Mac 4 settings.env    | Backend listen port (`3001` / `3002`)         |
-
----
-
-## License
-
-This project was developed as a coursework submission for the Computer Networks course. It is intended for educational purposes only.
+Built for Computer Networks coursework. The network behavior and the evidence behind it are the focus.

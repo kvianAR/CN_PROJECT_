@@ -1,22 +1,39 @@
 # Phase 2 — Harden, Recover and Troubleshoot
 
 This extends the exact final Phase 1 commit `52a46de198702b146ec60a2e5d6398dc92ab0def`.
-All original Phase 1 files and evidence remain in this single repository. Backends are reused,
-not rewritten. There are no Python package dependencies. Install Python 3, dnsmasq, Nginx,
+Original Phase 1 application/configuration files and evidence remain in this single repository.
+The machine guides are refreshed; backends are reused, not rewritten. There are no Python package dependencies. Install Python 3, dnsmasq, Nginx,
 OpenSSL and zsh. On Macs, use Homebrew for missing tools.
 
-## Status
+[Project overview](../README.md) · [Stepwise quick start](QUICKSTART_HI.md) · [Evidence](../Evidence/README.md) · [Report](REPORT.md)
 
-The real one-Mac integration rehearsal passed on the user's Terminal: independent DNS servers,
-UDP/TCP DNS, 30-second TTL expiry, cache flush, trusted TLS on both edges, A/B load balancing,
-backend failure/recovery, original ETag/304, standby service and both-backends-down HTTP 502.
-See [the machine-written results](LOCAL_TEST_RESULTS.json).
+## Start with your goal
 
-One standalone Nginx test originally used the historical Mac 2 IP and failed on a different Mac.
-It now selects loopback addresses and unused local ports. The saved full-suite summary now records all six tests passing without skips, with source hashes
-matching the current implementation. The complete transcript is retained under Evidence/Phase2/.
-Four-Mac firewall enforcement/rollback, actual OS resolver failover, macOS DNS cache flushing,
-natural DNS cutover and faculty troubleshooting still require the physical LAN.
+| Goal | Go to |
+|---|---|
+| Prepare machines and shared settings | [Configuration and startup](#1-configuration-and-startup) |
+| Configure trusted primary/standby HTTPS | [TLS setup](#2-preserve-certificate-trust-and-issue-the-standby-certificate) |
+| Demonstrate backup DNS | [Demo A](#demonstration-a--independent-backup-dns) |
+| Demonstrate TTL, expiry and flushing | [Demo B](#demonstration-b--real-dns-ttl-cache-expiry-and-cache-flush) |
+| Restrict direct backend access | [Demo C](#demonstration-c--backend-service-isolation-with-rollback) |
+| Stop and recover a backend | [Demo D](#demonstration-d--backend-failure-and-recovery) |
+| Move traffic to the standby edge | [Demo E](#demonstration-e--controlled-edge-migration) |
+| Diagnose an injected fault | [Demo F](#demonstration-f--troubleshooting) |
+| Save results and restore settings | [Evidence](#evidence-and-tests) · [Rollback](#restore-the-demonstration-network) |
+
+## Verification status
+
+The saved macOS local run passed **6/6 tests without skips**. Its source hashes match the current
+implementation. It covers independent DNS, UDP/TCP queries, real 30-second cache expiry/flush,
+trusted TLS on both edges, A/B balancing, backend failure/recovery, HTTP 304 and upstream HTTP 502.
+
+- [Complete test summary](../Evidence/Phase2/20261123T043836.040132Z-full-test-summary.json)
+- [Full execution transcript](../Evidence/Phase2/20261123T043836.040132Z-full-test-transcript.txt)
+- [Eleven service findings](LOCAL_TEST_RESULTS.json)
+
+Cross-Mac PF enforcement/rollback, OS resolver selection, natural DNS cutover, macOS cache
+observations and the faculty challenge need their own physical evidence. A successful local
+rehearsal does not substitute for those observations.
 
 ## Four-Mac service map
 
