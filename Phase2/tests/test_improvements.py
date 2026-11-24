@@ -64,3 +64,17 @@ class FirewallRecoveryGuards(unittest.TestCase):
                     lab.firewall('restore', 'b')
                 execute.assert_not_called()
             self.assertTrue(state.exists(), 'Recovery state must remain available after a guard failure')
+
+
+class DnsTtlVerification(unittest.TestCase):
+    def test_both_transports_and_wrong_ttl_detection(self):
+        for ttl, wanted in ((30, 0), (7, 1)):
+            with self.subTest(ttl=ttl), tempfile.TemporaryDirectory() as folder:
+                lab = cn.Lab(cn.defaults(), root=folder)
+                output = f'app.team1.test. {ttl} IN A {lab.c["mac2"]}\n'
+                with patch('cn.binary', side_effect=lambda name: name), \
+                     patch('cn.run', return_value=subprocess.CompletedProcess([], 0, output, '')) as execute, \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(lab.verify('dns-ttl'), wanted)
+                self.assertEqual(execute.call_count, 8)
+                self.assertEqual(sum('+tcp' in call.args[0] for call in execute.call_args_list), 4)

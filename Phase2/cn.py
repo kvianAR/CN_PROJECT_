@@ -461,8 +461,12 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
             return result
         expected = self.c['mac2'] if self.c['active_edge'] == 'primary' else self.c['mac3']
         def answer_ok(p):
-            return p.returncode == 0 and bool(re.search(r'\sIN\s+A\s+' + re.escape(expected) + r'\s*$', p.stdout, re.M))
-        if mode in ('baseline', 'dns-records', 'dns-backup'):
+            correct = p.returncode == 0 and bool(re.search(r'\sIN\s+A\s+' + re.escape(expected) + r'\s*$', p.stdout, re.M))
+            if mode == 'dns-ttl':
+                records = re.findall(r'\S+\s+(\d+)\s+IN\s+A\s+(\S+)', p.stdout)
+                correct = correct and bool(records) and all(int(ttl) == self.c['ttl'] for ttl, ip in records if ip == expected)
+            return correct
+        if mode in ('baseline', 'dns-records', 'dns-backup', 'dns-ttl'):
             for resolver in ('primary', 'backup'):
                 for label in ('app', 'api'):
                     name = label + '.' + self.c['domain']
@@ -470,6 +474,9 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
                         check('Primary DNS is stopped: ' + name, self.dig(resolver, name), lambda p: p.returncode != 0)
                     else:
                         check(resolver + ' DNS correct answer: ' + name, self.dig(resolver, name), answer_ok)
+                        if mode == 'dns-ttl':
+                            check(resolver + ' DNS TCP answer and TTL: ' + name,
+                                  self.dig(resolver, name) + ['+tcp'], answer_ok)
         if mode in ('baseline', 'balanced', 'b-only', 'migrated', 'dns-backup'):
             seen = set()
             for i in range(count):
@@ -589,7 +596,7 @@ def main():
     capture.add_argument('--interface', required=True, help='Use en0 for LAN or lo0 for local traffic.')
     flush = sub.add_parser('flush-os-cache')
     verify = sub.add_parser('verify')
-    verify.add_argument('mode', choices=('baseline', 'dns-records', 'dns-backup', 'balanced', 'b-only',
+    verify.add_argument('mode', choices=('baseline', 'dns-records', 'dns-backup', 'dns-ttl', 'balanced', 'b-only',
                                         'migrated', 'firewall-client', 'firewall-edge'))
     verify.add_argument('--ca', type=Path)
     verify.add_argument('--count', type=int, default=12)

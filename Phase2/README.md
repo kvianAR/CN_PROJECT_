@@ -160,6 +160,14 @@ Restart Mac 1's primary DNS after collecting evidence.
 
 ## Demonstration B — real DNS TTL, cache expiry and cache flush
 
+Check both project names on both resolvers over UDP and TCP, including the configured TTL:
+
+```bash
+python3 Phase2/cn.py verify dns-ttl
+```
+
+This checks fresh source answers. Cache-expiry observations remain a separate step below.
+
 The generated primary and backup configurations use `local-ttl=30`. Both serve the same
 `records.hosts` content. `dig @SERVER` directly queries a resolver and does not demonstrate the
 macOS application's DNS cache. The optional client-side dnsmasq below provides a controlled,
