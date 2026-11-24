@@ -2,6 +2,7 @@
 """Phase 2 tools for the existing four-Mac CN project. Python standard library only."""
 import argparse
 import datetime as dt
+import hashlib
 import ipaddress
 import json
 import os
@@ -20,6 +21,9 @@ BASELINE = '52a46de198702b146ec60a2e5d6398dc92ab0def'
 ROLES = ('dns-primary', 'dns-backup', 'edge-primary', 'edge-standby', 'backend-a', 'backend-b', 'cache')
 VERIFY_MODES = ('baseline', 'dns-records', 'dns-backup', 'dns-ttl', 'balanced', 'b-only',
                 'migrated', 'firewall-client', 'firewall-edge')
+CONFIG_FIELDS = ('domain', 'mac1', 'mac2', 'mac3', 'mac4', 'upstream_dns', 'interface',
+                 'dns_port', 'backup_dns_port', 'cache_port', 'https_port',
+                 'standby_https_port', 'backend_a_port', 'backend_b_port', 'ttl', 'active_edge')
 
 
 def env_file(path):
@@ -51,9 +55,7 @@ def defaults(root=PROJECT):
 def validate(c, rehearsal=False):
     if not isinstance(c, dict):
         raise ValueError('Configuration must be a JSON object')
-    required = {'domain', 'mac1', 'mac2', 'mac3', 'mac4', 'upstream_dns', 'interface',
-                'dns_port', 'backup_dns_port', 'cache_port', 'https_port',
-                'standby_https_port', 'backend_a_port', 'backend_b_port', 'ttl', 'active_edge'}
+    required = set(CONFIG_FIELDS)
     missing = required - c.keys()
     if missing:
         raise ValueError('Missing configuration fields: ' + ', '.join(sorted(missing)))
@@ -452,6 +454,8 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
             raise ValueError('Unknown verification mode: ' + str(mode))
         if type(count) is not int or not 2 <= count <= 100:
             raise ValueError('Verification count must be an integer from 2 to 100')
+        configuration = {field: self.c[field] for field in CONFIG_FIELDS}
+        digest = hashlib.sha256(json.dumps(configuration, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
         checks = []
         def check(name, cmd, predicate):
             try:
@@ -511,6 +515,7 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
         path = folder / (dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ') + '-' + mode + '.json')
         record = dict(time_utc=dt.datetime.now(dt.timezone.utc).isoformat(), host=socket.gethostname(),
                       baseline=BASELINE, mode=mode, overall_pass=okay, checks=checks,
+                      configuration=configuration, configuration_sha256=digest,
                       scope='Live commands on this host; attach packet evidence and physical-machine details separately.')
         write(path, json.dumps(record, indent=2))
         print(('PASS' if okay else 'FAIL') + ' overall. Evidence: ' + str(path))

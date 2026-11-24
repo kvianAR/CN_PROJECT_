@@ -90,3 +90,21 @@ class VerificationGuards(unittest.TestCase):
                         lab.verify(mode, count=count)
                 execute.assert_not_called()
             self.assertFalse((Path(folder) / 'Evidence').exists())
+
+
+class EvidenceProvenance(unittest.TestCase):
+    def test_verification_saves_exact_public_configuration_without_extra_keys(self):
+        import hashlib
+        with tempfile.TemporaryDirectory() as folder:
+            lab = cn.Lab(dict(cn.defaults(), unrelated_secret='do-not-copy'), root=folder)
+            output = f'app.team1.test. 30 IN A {lab.c["mac2"]}\n'
+            with patch('cn.binary', side_effect=lambda name: name), \
+                 patch('cn.run', return_value=subprocess.CompletedProcess([], 0, output, '')), \
+                 contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(lab.verify('dns-records'), 0)
+            record = json.loads(next((Path(folder) / 'Evidence/Phase2').glob('*.json')).read_text())
+            config = record['configuration']
+            self.assertEqual(config['mac4'], lab.c['mac4'])
+            self.assertNotIn('unrelated_secret', config)
+            expected = hashlib.sha256(json.dumps(config, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+            self.assertEqual(record['configuration_sha256'], expected)
