@@ -108,3 +108,31 @@ class EvidenceProvenance(unittest.TestCase):
             self.assertNotIn('unrelated_secret', config)
             expected = hashlib.sha256(json.dumps(config, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
             self.assertEqual(record['configuration_sha256'], expected)
+
+
+class RunnerFailureEvidence(unittest.TestCase):
+    def test_discovery_failure_and_interrupt_save_incomplete_results(self):
+        import run_checks
+        for error, expected in ((ImportError('broken discovery'), 1), (KeyboardInterrupt(), 130)):
+            with self.subTest(error=type(error).__name__), tempfile.TemporaryDirectory() as folder:
+                root = Path(folder)
+                (root / 'Phase2/tests').mkdir(parents=True)
+                (root / 'Phase2/cn.py').write_text('# fixture\n')
+                (root / 'Phase2/tests/test_phase2.py').write_text('# fixture\n')
+                previous_cwd = Path.cwd()
+                try:
+                    with patch.object(run_checks, 'ROOT', root), patch.dict(os.environ), \
+                         patch.object(sys, 'path', list(sys.path)), \
+                         patch.object(unittest.defaultTestLoader, 'discover', side_effect=error), \
+                         contextlib.redirect_stdout(io.StringIO()):
+                        self.assertEqual(run_checks.main(), expected)
+                finally:
+                    os.chdir(previous_cwd)
+                summary = next((root / 'Evidence/Phase2').glob('*-summary.json'))
+                record = json.loads(summary.read_text())
+                self.assertFalse(record['all_passed_without_skips'])
+                self.assertTrue((root / record['transcript']).is_file())
+                if expected == 130:
+                    self.assertTrue(record['interrupted'])
+                else:
+                    self.assertIn('broken discovery', record['runner_error'])

@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import traceback
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,11 +39,20 @@ def main():
     transcript = folder / (stamp + '-full-test-transcript.txt')
     summary = folder / (stamp + '-full-test-summary.json')
     stdout, stderr = sys.stdout, sys.stderr
+    result = unittest.TestResult()
+    runner_error = None
+    interrupted = False
     with transcript.open('w') as log:
         try:
             sys.stdout, sys.stderr = Tee(stdout, log), Tee(stderr, log)
             suite = unittest.defaultTestLoader.discover(str(ROOT / 'Phase2/tests'))
             result = unittest.TextTestRunner(stream=sys.stdout, verbosity=2).run(suite)
+        except KeyboardInterrupt:
+            interrupted = True
+            print('INTERRUPTED: the run is incomplete; its transcript and summary will be retained.')
+        except Exception:
+            runner_error = traceback.format_exc()
+            print(runner_error)
         finally:
             sys.stdout, sys.stderr = stdout, stderr
     status = {
@@ -51,7 +61,10 @@ def main():
         'failed': [{'test': t.id(), 'traceback': tb} for t, tb in result.failures],
         'errors': [{'test': t.id(), 'traceback': tb} for t, tb in result.errors],
         'skipped': [{'test': t.id(), 'reason': reason} for t, reason in result.skipped],
-        'all_passed_without_skips': result.testsRun >= 6 and result.wasSuccessful() and not result.skipped,
+        'all_passed_without_skips': (result.testsRun >= 6 and result.wasSuccessful() and
+                                     not result.skipped and not interrupted and runner_error is None),
+        'interrupted': interrupted,
+        'runner_error': runner_error,
         'transcript': str(transcript.relative_to(ROOT)),
         'scope': 'One-Mac local rehearsal. Not proof of physical firewall, OS resolver failover, natural DNS cutover or faculty fault recovery.'
     }
@@ -71,7 +84,7 @@ def main():
         print(f'PASS: {result.testsRun}/{result.testsRun}. Physical LAN checks remain separate.')
         return 0
     print('NOT COMPLETE: inspect failures or skipped checks in the saved summary.')
-    return 1
+    return 130 if interrupted else 1
 
 
 if __name__ == '__main__':
