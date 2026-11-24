@@ -47,7 +47,7 @@ Already have the project? Open its folder and double-click **`RUN_CN.command`**.
 
 | What happens | Where to find it |
 |---|---|
-| All six local tests run | Terminal output |
+| The full current test suite runs | Terminal output |
 | Full transcript and structured summary are saved | `Evidence/Phase2/` |
 | A combined report opens in your browser | `CN_REPORT.html` |
 | Temporary services stop when tests finish | No persistent demo services remain |
@@ -175,6 +175,7 @@ natural client DNS cutover or the faculty-injected challenge. See the
 | Start with short, stepwise instructions | [Quick start · Hinglish](Phase2/QUICKSTART_HI.md) |
 | Run all six Phase 2 demonstrations | [Complete runbook](Phase2/README.md) |
 | Set up a particular machine | [Mac 1](Mac%201%20-%20DNS/README.md) · [Mac 2](Mac%202%20-%20Edge/README.md) · [Mac 3](Mac%203%20-%20Backend%20A/README.md) · [Mac 4](Mac%204%20-%20Backend%20B/README.md) |
+| Prepare for the Mac 3 viva | [Mac 3 viva handbook](Phase2/docs/MAC3_VIVA.md) |
 | Diagnose a fault and recover | [Troubleshooting](Phase2/docs/TROUBLESHOOTING.md) |
 | Find screenshots, captures or test output | [Evidence index](Evidence/README.md) |
 | Read the academic report | [Phase 2 report](Phase2/REPORT.md) |

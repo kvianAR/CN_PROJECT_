@@ -27,7 +27,7 @@ Sirf tests chalane ka alternate command:
 PYTHONDONTWRITEBYTECODE=1 CN_RUN_INTEGRATION=1 python3 -u -m unittest discover -s Phase2/tests -v
 ```
 
-Lagbhag ek minute. `Ran 6 tests` ke baad `OK` chahiye. Directory ka path akela command nahi hai;
+Lagbhag ek minute. Test summary ke baad `OK` chahiye; latest suite mein extra regression checks bhi hain. Directory ka path akela command nahi hai;
 folder mein jaane ke liye `cd "folder ka path"` use karo. `chmod` ki zaroorat nahi.
 
 ## B. Four-Mac deployment

@@ -5,7 +5,7 @@ Original Phase 1 application/configuration files and evidence remain in this sin
 The machine guides are refreshed; backends are reused, not rewritten. There are no Python package dependencies. Install Python 3, dnsmasq, Nginx,
 OpenSSL and zsh. On Macs, use Homebrew for missing tools.
 
-[Project overview](../README.md) · [Stepwise quick start](QUICKSTART_HI.md) · [Evidence](../Evidence/README.md) · [Report](REPORT.md)
+[Mac 3 viva handbook](docs/MAC3_VIVA.md) · [Project overview](../README.md) · [Stepwise quick start](QUICKSTART_HI.md) · [Evidence](../Evidence/README.md) · [Report](REPORT.md)
 
 ## Start with your goal
 
