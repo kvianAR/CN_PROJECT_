@@ -19,10 +19,15 @@ jobs:
       - name: Run configuration, TLS, and real loopback integration tests
         env:
           CN_RUN_INTEGRATION: '1'
-        run: python3 -u -m unittest discover -s Phase2/tests -v
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: python3 -u Phase2/run_checks.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: local-rehearsal-results
-          path: Phase2/LOCAL_TEST_RESULTS.json
+          name: cn-test-evidence
+          path: |
+            Phase2/LOCAL_TEST_RESULTS.json
+            Phase2/VALIDATION_STATUS.json
+            Evidence/Phase2/*-full-test-summary.json
+            Evidence/Phase2/*-full-test-transcript.txt
           if-no-files-found: ignore
