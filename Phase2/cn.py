@@ -328,6 +328,11 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
             if not state.exists():
                 raise RuntimeError('No saved firewall session; refusing to guess previous rules.')
             saved = json.loads(state.read_text())
+            if saved.get('backend', backend) != backend:
+                raise RuntimeError('Saved firewall session belongs to backend ' + saved['backend'] +
+                                   '; use the matching --backend for rollback.')
+            if not Path(saved['prior_rules']).is_file():
+                raise RuntimeError('Saved firewall backup is missing; no rollback changes made.')
             call('-a', anchor, '-f', saved['prior_rules'])
             # Release only our enable reference, never globally disable PF.
             if saved.get('token'):

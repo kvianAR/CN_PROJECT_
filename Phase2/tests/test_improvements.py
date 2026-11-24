@@ -49,3 +49,18 @@ class AtomicWrites(unittest.TestCase):
                     cn.write(path, 'replacement')
             self.assertEqual(path.read_text(), 'original')
             self.assertEqual(list(Path(folder).glob('*.tmp')), [])
+
+
+class FirewallRecoveryGuards(unittest.TestCase):
+    def test_wrong_backend_and_missing_backup_cannot_change_pf(self):
+        with tempfile.TemporaryDirectory() as folder:
+            lab = cn.Lab(cn.defaults(), root=folder)
+            state = lab.runtime / 'firewall/active.json'
+            cn.write(state, json.dumps({'backend': 'b', 'prior_rules': str(Path(folder) / 'missing.pf')}))
+            with patch('cn.binary', side_effect=lambda name: name), patch('cn.run') as execute:
+                with self.assertRaisesRegex(RuntimeError, 'belongs to backend b'):
+                    lab.firewall('restore', 'a')
+                with self.assertRaisesRegex(RuntimeError, 'backup is missing'):
+                    lab.firewall('restore', 'b')
+                execute.assert_not_called()
+            self.assertTrue(state.exists(), 'Recovery state must remain available after a guard failure')
