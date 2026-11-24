@@ -46,13 +46,24 @@ def defaults(root=PROJECT):
 
 
 def validate(c, rehearsal=False):
+    if not isinstance(c, dict):
+        raise ValueError('Configuration must be a JSON object')
+    required = {'domain', 'mac1', 'mac2', 'mac3', 'mac4', 'upstream_dns', 'interface',
+                'dns_port', 'backup_dns_port', 'cache_port', 'https_port',
+                'standby_https_port', 'backend_a_port', 'backend_b_port', 'ttl', 'active_edge'}
+    missing = required - c.keys()
+    if missing:
+        raise ValueError('Missing configuration fields: ' + ', '.join(sorted(missing)))
     for key in ('mac1', 'mac2', 'mac3', 'mac4', 'upstream_dns'):
         ip = ipaddress.IPv4Address(c[key])
         if ip.is_unspecified or ip.is_multicast or ip == ipaddress.IPv4Address('255.255.255.255'):
             raise ValueError('Invalid service IPv4: ' + key)
+        if not rehearsal and key != 'upstream_dns' and ip.is_loopback:
+            raise ValueError('Physical machine addresses cannot be loopback: ' + key)
     if not rehearsal and len({c[k] for k in ('mac1', 'mac2', 'mac3', 'mac4')}) != 4:
         raise ValueError('Four-Mac deployment requires four distinct IPv4 addresses')
-    if not re.fullmatch(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+test', c['domain']):
+    if (not isinstance(c['domain'], str) or len(c['domain']) > 253 or
+            not re.fullmatch(r'(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+test', c['domain'])):
         raise ValueError('Use a valid lowercase .test domain')
     if not re.fullmatch(r'[a-z][a-z0-9]{0,15}', c['interface']):
         raise ValueError('Invalid network interface')
