@@ -26,3 +26,26 @@ class DeploymentGuards(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'loopback'):
             cn.validate(config)
         self.assertEqual(cn.validate(config, rehearsal=True)['mac1'], '127.0.0.2')
+
+
+class AtomicWrites(unittest.TestCase):
+    def test_concurrent_writers_leave_a_complete_document(self):
+        from concurrent.futures import ThreadPoolExecutor
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'state.json'
+            documents = [json.dumps({'writer': n, 'payload': str(n) * 1000}) for n in range(20)]
+            with ThreadPoolExecutor(max_workers=8) as workers:
+                list(workers.map(lambda document: cn.write(path, document), documents))
+            self.assertIn(path.read_text(), documents)
+            self.assertEqual(list(Path(folder).glob('*.tmp')), [])
+
+    def test_failed_replacement_preserves_original_and_private_permissions(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'state.json'
+            cn.write(path, 'original', private=True)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            with patch('cn.os.replace', side_effect=OSError('write failed')):
+                with self.assertRaises(OSError):
+                    cn.write(path, 'replacement')
+            self.assertEqual(path.read_text(), 'original')
+            self.assertEqual(list(Path(folder).glob('*.tmp')), [])

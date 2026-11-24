@@ -12,6 +12,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -108,11 +109,19 @@ def run(command, check=True, timeout=20, **kwargs):
 
 def write(path, text, private=False):
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + '.new')
-    temporary.write_text(text)
-    if private:
-        temporary.chmod(0o600)
-    temporary.replace(path)
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                         prefix=path.name + '.', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            temporary.chmod(0o600 if private else 0o644)
+            stream.write(text)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def nginx_quote(path):
