@@ -18,6 +18,8 @@ import time
 PROJECT = Path(__file__).resolve().parents[1]
 BASELINE = '52a46de198702b146ec60a2e5d6398dc92ab0def'
 ROLES = ('dns-primary', 'dns-backup', 'edge-primary', 'edge-standby', 'backend-a', 'backend-b', 'cache')
+VERIFY_MODES = ('baseline', 'dns-records', 'dns-backup', 'dns-ttl', 'balanced', 'b-only',
+                'migrated', 'firewall-client', 'firewall-edge')
 
 
 def env_file(path):
@@ -446,6 +448,10 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
                 'A', '+time=2', '+tries=1', '+noall', '+answer', '+comments', '+stats']
 
     def verify(self, mode, ca=None, count=12):
+        if mode not in VERIFY_MODES:
+            raise ValueError('Unknown verification mode: ' + str(mode))
+        if type(count) is not int or not 2 <= count <= 100:
+            raise ValueError('Verification count must be an integer from 2 to 100')
         checks = []
         def check(name, cmd, predicate):
             try:
@@ -499,7 +505,7 @@ block drop in quick on {c['interface']} inet6 proto tcp from any to any port {{ 
                       lambda p, wanted=wanted: (p.returncode == 0) == wanted)
             check('Application through domain remains usable', self.curl(ca=ca),
                   lambda p: p.returncode == 0 and 'HTTP/1.1 200' in p.stdout)
-        okay = all(item['pass'] for item in checks)
+        okay = bool(checks) and all(item['pass'] for item in checks)
         folder = self.root / 'Evidence/Phase2'
         folder.mkdir(parents=True, exist_ok=True)
         path = folder / (dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S.%fZ') + '-' + mode + '.json')
@@ -596,8 +602,7 @@ def main():
     capture.add_argument('--interface', required=True, help='Use en0 for LAN or lo0 for local traffic.')
     flush = sub.add_parser('flush-os-cache')
     verify = sub.add_parser('verify')
-    verify.add_argument('mode', choices=('baseline', 'dns-records', 'dns-backup', 'dns-ttl', 'balanced', 'b-only',
-                                        'migrated', 'firewall-client', 'firewall-edge'))
+    verify.add_argument('mode', choices=VERIFY_MODES)
     verify.add_argument('--ca', type=Path)
     verify.add_argument('--count', type=int, default=12)
     diag = sub.add_parser('diagnose')

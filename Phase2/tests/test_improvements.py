@@ -78,3 +78,15 @@ class DnsTtlVerification(unittest.TestCase):
                     self.assertEqual(lab.verify('dns-ttl'), wanted)
                 self.assertEqual(execute.call_count, 8)
                 self.assertEqual(sum('+tcp' in call.args[0] for call in execute.call_args_list), 4)
+
+
+class VerificationGuards(unittest.TestCase):
+    def test_empty_or_invalid_programmatic_checks_cannot_report_pass(self):
+        with tempfile.TemporaryDirectory() as folder:
+            lab = cn.Lab(cn.defaults(), root=folder)
+            with patch('cn.run') as execute:
+                for mode, count in (('typo', 12), ('b-only', 0), ('balanced', 101), ('b-only', True)):
+                    with self.subTest(mode=mode, count=count), self.assertRaises(ValueError):
+                        lab.verify(mode, count=count)
+                execute.assert_not_called()
+            self.assertFalse((Path(folder) / 'Evidence').exists())
