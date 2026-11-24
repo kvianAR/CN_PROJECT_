@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Run the full local rehearsal and save the complete test summary and transcript."""
 import datetime as dt
-import hashlib
 import json
 import os
 from pathlib import Path
 import sys
 import traceback
 import unittest
+from provenance import fingerprint_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -39,6 +39,7 @@ def main():
     transcript = folder / (stamp + '-full-test-transcript.txt')
     summary = folder / (stamp + '-full-test-summary.json')
     stdout, stderr = sys.stdout, sys.stderr
+    source_before = fingerprint_sources(ROOT)
     result = unittest.TestResult()
     runner_error = None
     interrupted = False
@@ -55,6 +56,8 @@ def main():
             print(runner_error)
         finally:
             sys.stdout, sys.stderr = stdout, stderr
+    source_after = fingerprint_sources(ROOT)
+    source_changed = source_before != source_after
     status = {
         'time_utc': dt.datetime.now(dt.timezone.utc).isoformat(),
         'tests_run': result.testsRun,
@@ -62,14 +65,15 @@ def main():
         'errors': [{'test': t.id(), 'traceback': tb} for t, tb in result.errors],
         'skipped': [{'test': t.id(), 'reason': reason} for t, reason in result.skipped],
         'all_passed_without_skips': (result.testsRun >= 6 and result.wasSuccessful() and
-                                     not result.skipped and not interrupted and runner_error is None),
+                                     not result.skipped and not interrupted and runner_error is None and
+                                     not source_changed),
+        'source_changed_during_run': source_changed,
         'interrupted': interrupted,
         'runner_error': runner_error,
         'transcript': str(transcript.relative_to(ROOT)),
         'scope': 'One-Mac local rehearsal. Not proof of physical firewall, OS resolver failover, natural DNS cutover or faculty fault recovery.'
     }
-    status['source_sha256'] = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
-                               for p in (ROOT / 'Phase2/cn.py', ROOT / 'Phase2/tests/test_phase2.py')}
+    status['source_sha256'] = source_before
     summary.write_text(json.dumps(status, indent=2) + '\n')
     print('Transcript:', transcript)
     print('Summary:', summary)
@@ -84,6 +88,8 @@ def main():
         print(f'PASS: {result.testsRun}/{result.testsRun}. Physical LAN checks remain separate.')
         return 0
     print('NOT COMPLETE: inspect failures or skipped checks in the saved summary.')
+    if source_changed:
+        print('Source files changed during execution. Rerun against one stable revision.')
     return 130 if interrupted else 1
 
 

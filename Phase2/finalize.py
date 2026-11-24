@@ -3,13 +3,13 @@
 import argparse
 import ast
 import datetime as dt
-import hashlib
 import html
 import json
 from pathlib import Path
 import re
 import subprocess
 import sys
+from provenance import fingerprint_sources
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = [
@@ -98,8 +98,7 @@ def build():
     integration = json.loads((ROOT / 'Phase2/LOCAL_TEST_RESULTS.json').read_text())
     suite = validation.get('full_suite', {})
     fingerprint = suite.get('source_sha256')
-    current = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
-               for name in ('Phase2/cn.py', 'Phase2/tests/test_phase2.py')}
+    current = fingerprint_sources(ROOT)
     if fingerprint:
         suite_state = ('Machine-recorded suite matches current sources' if fingerprint == current
                        else 'Saved full-suite result predates source changes; rerun CHECK_PROJECT.command')

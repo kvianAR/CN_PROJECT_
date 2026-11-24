@@ -136,3 +136,32 @@ class RunnerFailureEvidence(unittest.TestCase):
                     self.assertTrue(record['interrupted'])
                 else:
                     self.assertIn('broken discovery', record['runner_error'])
+
+
+class SourceFingerprints(unittest.TestCase):
+    def test_helpers_and_all_tests_are_fingerprinted_but_runtime_is_excluded(self):
+        from provenance import fingerprint_sources
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for name in ('cn.py', 'run_checks.py', 'tests/test_new.py', 'runtime/generated.py'):
+                target = root / 'Phase2' / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text('# original\n')
+            first = fingerprint_sources(root)
+            self.assertEqual(set(first), {'Phase2/cn.py', 'Phase2/run_checks.py', 'Phase2/tests/test_new.py'})
+            (root / 'Phase2/tests/test_new.py').write_text('# changed\n')
+            self.assertNotEqual(fingerprint_sources(root), first)
+
+    def test_adding_or_removing_a_helper_invalidates_previous_evidence(self):
+        from provenance import fingerprint_sources
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / 'Phase2').mkdir()
+            (root / 'Phase2/cn.py').write_text('# source\n')
+            first = fingerprint_sources(root)
+            added = root / 'Phase2/helper.py'
+            added.write_text('# helper\n')
+            second = fingerprint_sources(root)
+            self.assertNotEqual(first, second)
+            added.unlink()
+            self.assertEqual(first, fingerprint_sources(root))

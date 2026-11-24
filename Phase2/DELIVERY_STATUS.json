@@ -1,10 +1,14 @@
 {
-  "generated_at_utc": "2026-11-23T04:59:14.945125+00:00",
+  "generated_at_utc": "2026-11-24T03:17:57.119523+00:00",
   "scope": "Static source audit; does not execute network services or firewall rules",
   "required_files_present": 22,
   "python_sources_parse": true,
   "current_source_sha256": {
-    "Phase2/cn.py": "ebda181dbae82d539b0f107e4f39d107407b663fdfebaa53a2006a2b6adf1ea2",
+    "Phase2/cn.py": "dd1efe181a01f7429a6b37d87d2735275166c5a1075aba397f00d097e85f2b68",
+    "Phase2/finalize.py": "a713e9c98bf3ca64ad4f78b2a8e07da8ad9ed8624cbff0a03d0d2eb2cf0c5f95",
+    "Phase2/provenance.py": "3ec4631a3445363e37026bc4fca1f74d1415e764725fc9228d7f8c401350997f",
+    "Phase2/run_checks.py": "138df3d8af05c1de6c45195c16eb41a86b38165d3954a45d14a670f7942a6f35",
+    "Phase2/tests/test_improvements.py": "d9f05763a80bb96d023c2de69497e6c5d7416610de261d9ff8f9d62833917dbd",
     "Phase2/tests/test_phase2.py": "f807be69ccae9d206cfa76d09b3aa5adff15d8aa9d6461eaa871abd89906c12a"
   },
   "suite_status": "Saved full-suite result predates source changes; rerun CHECK_PROJECT.command",
